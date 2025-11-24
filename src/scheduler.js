@@ -111,7 +111,7 @@ class Scheduler {
     }
   }
 
-  // Limpa todos os agendamentos
+  // Limpa todos os agendamentos...
   clearAllSchedules() {
     this.timeouts.forEach(timeoutId => clearTimeout(timeoutId));
     this.timeouts = [];

@@ -358,7 +358,7 @@ const TrayManager = require('./trayManager');
 const Scheduler = require('./scheduler');
 const ApiClient = require('./apiClient');
 
-// Variáveis globais
+// Variáveis globais da app
 let videoWindow = null;
 let trayManager = null;
 let scheduler = null;

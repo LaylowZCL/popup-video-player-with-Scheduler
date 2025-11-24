@@ -220,7 +220,7 @@ class ApiClient {
         return { hasUpdates: true, hasScheduleUpdates: false };
       }
       
-      // Verifica se há novos vídeos desde a última atualização
+      // Verifica se há novos vídeos desde a última atualização...
       const hasNewVideos = response.data.videos.some(video => {
         const videoDate = new Date(video.lastSync);
         return videoDate > this.lastUpdate;
