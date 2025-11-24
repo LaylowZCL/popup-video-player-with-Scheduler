@@ -1,0 +1,33 @@
+{
+    "name": "Video Popup BM",
+    "version": "1.0.0",
+    "main": "src/main.js",
+    "scripts": {
+      "start": "electron .",
+      "pack": "electron-builder --dir",
+      "dist": "electron-builder",
+      "dist:win": "electron-builder --win",
+      "dist:mac": "electron-builder --mac"
+    },
+    "build": {
+      "appId": "com.example.videopopup",
+      "win": {
+        "target": "nsis",
+        "icon": "assets/icons/icon.ico"
+      },
+      "mac": {
+        "target": "dmg",
+        "icon": "assets/icons/icon.icns"
+      },
+      "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true,
+        "runAfterFinish": true
+      }
+    },
+    "dependencies": {
+      "electron": "latest",
+      "axios": "latest",
+      "electron-builder": "latest"
+    }
+  }
