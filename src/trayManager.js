@@ -30,7 +30,7 @@ class TrayManager extends EventEmitter {
       }
     ]);
     
-    this.tray.setToolTip('Video Popup Scheduler');
+    this.tray.setToolTip('Video Saude Popup BM');
     this.tray.setContextMenu(contextMenu);
   }
 
@@ -55,14 +55,23 @@ class TrayManager extends EventEmitter {
     }
   }
   
-  showNotification(message) {
+  /*showNotification(message) {
     if (this.tray && this.tray.isDestroyed() === false) {
       this.tray.displayBalloon({
         title: 'Video Scheduler',
         content: message
       });
     }
+  }*/
+
+  showNotification(title, message) {
+  if (this.tray && !this.tray.isDestroyed()) {
+    this.tray.displayBalloon({
+      title: title || 'Video Scheduler',
+      content: message
+    });
   }
+}
 }
 
 module.exports = TrayManager;
