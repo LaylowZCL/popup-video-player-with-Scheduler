@@ -1,0 +1,26 @@
+{
+  "name": "popup-video-player-with-Scheduler",
+  "version": "1.0.0",
+  "description": "Video Popup Scheduler Application",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --inspect=5858",
+    "debug": "electron . --debug",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "video",
+    "scheduler",
+    "popup"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
