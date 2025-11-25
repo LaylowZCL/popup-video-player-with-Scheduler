@@ -41,7 +41,7 @@ class ApiClient {
 
   async getScheduleTimes() {
     try {
-      const response = await axios.get(`${this.baseUrl}/schedules`); // Nova endpoint
+      const response = await axios.get(`${this.baseUrl}/schedules/clients`); // Nova endpoint
       
       if (response.data && response.data.schedule_times && Array.isArray(response.data.schedule_times)) {
         this.scheduleTimes = response.data.schedule_times;
