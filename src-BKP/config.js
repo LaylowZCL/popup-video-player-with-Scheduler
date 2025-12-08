@@ -2,9 +2,9 @@ module.exports = {
   API: {
     BASE_URL: 'https://dev.fernandozucula.com/api',
     ENDPOINTS: {
-      VIDEOS: '/scheduled/videos',
-      SCHEDULE: '/schedules/clients',
-      REPORT: '/videos/report'
+      VIDEOS: '/scheduled/videos',       // Obtém vídeos agendados
+      SCHEDULE: '/schedules/clients',      // Obtém horários
+      REPORT: '/videos/report'            // Envia relatórios
     },
     AUTH: {
       API_KEY: 'VIDEO_POPUP_SECRET_2025',
@@ -20,7 +20,13 @@ module.exports = {
     VERSION: '1.0.0',
     AUTO_START: true,
     VIDEO_LOOP: true,
-    DEFAULT_SCHEDULE: ['09:00', '12:00', '15:00', '18:00']
+    DEFAULT_SCHEDULE: ['09:00', '12:00', '15:00', '18:00'],
+    
+    // INTERVALOS DE VERIFICAÇÃO (em milissegundos)
+    CHECK_INTERVALS: {
+      SCHEDULE: 600 * 1000,    // 10 segundos
+      VIDEOS: 600 * 1000   // 5 minutos
+    }
   },
   
   WINDOW: {

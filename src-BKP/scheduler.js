@@ -11,23 +11,30 @@ class Scheduler {
   }
 
   async init() {
+    console.log('⏰ Inicializando scheduler...');
+
     try {
       const times = await this.apiClient.getScheduleTimes();
 
       if (Array.isArray(times) && times.length > 0) {
         this.scheduleTimes = times;
+        console.log('✅ Horários carregados:', this.scheduleTimes);
       } else {
-        this.scheduleTimes = config.APP.DEFAULT_SCHEDULE;
+        console.log('⚠️  Usando horários padrão:', this.scheduleTimes);
       }
 
       this.scheduleAll();
+
     } catch (error) {
+      console.error('❌ Erro ao inicializar scheduler:', error.message);
       this.scheduleAll();
     }
   }
 
   scheduleAll() {
     this.clearAllSchedules();
+
+    console.log('📅 Agendando vídeos para:', this.scheduleTimes);
 
     this.scheduleTimes.forEach(time => {
       if (this.isValidTimeFormat(time)) {
@@ -60,10 +67,15 @@ class Scheduler {
     }
 
     const timeout = scheduledTime.getTime() - now.getTime();
+    const minutesUntil = Math.round(timeout / 1000 / 60);
+
+    console.log(`⏰ Agendado: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} (em ${minutesUntil} minutos)`);
 
     const timeoutId = setTimeout(() => {
+      console.log(`🎬 HORA DO VÍDEO! Executando às ${hours}:${minutes}`);
       this.onTrigger();
-      this.scheduleDaily(hours, minutes);
+      console.log(`⏰ Reagendando para amanhã às ${hours}:${minutes}`);
+      this.scheduleDaily(hours, minutes); // Reagenda
     }, timeout);
 
     this.timeouts.push(timeoutId);
@@ -73,6 +85,7 @@ class Scheduler {
     if (Array.isArray(newTimes) && newTimes.length > 0) {
       this.scheduleTimes = newTimes;
       this.scheduleAll();
+      console.log('✅ Horários atualizados:', newTimes);
     }
   }
 

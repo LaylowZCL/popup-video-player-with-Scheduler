@@ -41,12 +41,15 @@ class ConfigManager {
         const configData = fs.readFileSync(this.configPath, 'utf8');
         const userConfig = JSON.parse(configData);
         
+        // Merge com configuração padrão
         return this.deepMerge(this.defaultConfig, userConfig);
       } else {
+        // Criar ficheiro com configuração padrão
         this.saveConfig(this.defaultConfig);
         return this.defaultConfig;
       }
     } catch (error) {
+      console.error('❌ Erro ao carregar configuração:', error);
       return this.defaultConfig;
     }
   }
@@ -54,7 +57,9 @@ class ConfigManager {
   saveConfig(config) {
     try {
       fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2), 'utf8');
+      console.log('✅ Configuração salva em:', this.configPath);
     } catch (error) {
+      console.error('❌ Erro ao salvar configuração:', error);
     }
   }
 
@@ -132,6 +137,29 @@ class ConfigManager {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     };
+  }
+
+  // Método para atualizar configurações remotamente (opcional)
+  async updateFromRemote() {
+    try {
+      const axios = require('axios');
+      const updateUrl = `${this.get('api.baseUrl')}/config/electron`;
+      
+      const response = await axios.get(updateUrl, {
+        headers: this.getAuthHeaders(),
+        timeout: 5000
+      });
+      
+      if (response.data && response.data.success) {
+        this.deepMerge(this.config, response.data.config);
+        this.saveConfig(this.config);
+        console.log('✅ Configuração atualizada remotamente');
+        return true;
+      }
+    } catch (error) {
+      console.log('⚠️  Não foi possível atualizar configuração remotamente');
+    }
+    return false;
   }
 }
 
