@@ -1,36 +1,53 @@
+const config = require('./config');
+
 class Scheduler {
   constructor({ onTrigger, apiClient }) {
     this.onTrigger = onTrigger;
     this.apiClient = apiClient;
-    this.scheduleTimes = ['12:00', '15:00', '18:00']; // Horários padrão
-    this.timeouts = []; // Array para guardar os timeouts
-    this.start();
+    this.scheduleTimes = config.APP.DEFAULT_SCHEDULE;
+    this.timeouts = [];
+
+    this.init();
   }
 
-  async start() {
+  async init() {
+    console.log('⏰ Inicializando scheduler...');
+
     try {
-      // Busca horários da API
-      if (this.apiClient) {
-        this.scheduleTimes = await this.apiClient.getScheduleTimes();
-        console.log('Horários carregados:', this.scheduleTimes);
+      const times = await this.apiClient.getScheduleTimes();
+
+      if (Array.isArray(times) && times.length > 0) {
+        this.scheduleTimes = times;
+        console.log('✅ Horários carregados:', this.scheduleTimes);
+      } else {
+        console.log('⚠️  Usando horários padrão:', this.scheduleTimes);
       }
-      
+
       this.scheduleAll();
+
     } catch (error) {
-      console.error('Erro ao carregar horários, usando padrão:', error);
+      console.error('❌ Erro ao inicializar scheduler:', error.message);
       this.scheduleAll();
     }
   }
 
   scheduleAll() {
-    // Limpa timeouts existentes
     this.clearAllSchedules();
-    
-    // Agenda cada horário
+
+    console.log('📅 Agendando vídeos para:', this.scheduleTimes);
+
     this.scheduleTimes.forEach(time => {
-      const [hours, minutes] = time.split(':').map(Number);
-      this.scheduleDaily(hours, minutes);
+      if (this.isValidTimeFormat(time)) {
+        const [hours, minutes] = time.split(':').map(Number);
+        this.scheduleDaily(hours, minutes);
+      }
     });
+  }
+
+  isValidTimeFormat(time) {
+    if (typeof time !== 'string') return false;
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(time.trim());
   }
 
   scheduleDaily(hours, minutes) {
@@ -50,30 +67,33 @@ class Scheduler {
     }
 
     const timeout = scheduledTime.getTime() - now.getTime();
+    const minutesUntil = Math.round(timeout / 1000 / 60);
+
+    console.log(`⏰ Agendado: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} (em ${minutesUntil} minutos)`);
 
     const timeoutId = setTimeout(() => {
+      console.log(`🎬 HORA DO VÍDEO! Executando às ${hours}:${minutes}`);
       this.onTrigger();
-      this.scheduleDaily(hours, minutes); // Reagenda para o próximo dia
+      console.log(`⏰ Reagendando para amanhã às ${hours}:${minutes}`);
+      this.scheduleDaily(hours, minutes); // Reagenda
     }, timeout);
 
     this.timeouts.push(timeoutId);
   }
 
-  // Método para atualizar horários em tempo de execução
   async updateScheduleTimes(newTimes) {
-    if (Array.isArray(newTimes)) {
+    if (Array.isArray(newTimes) && newTimes.length > 0) {
       this.scheduleTimes = newTimes;
-      this.scheduleAll(); // Reagenda tudo com os novos horários
+      this.scheduleAll();
+      console.log('✅ Horários atualizados:', newTimes);
     }
   }
 
-  // Limpa todos os agendamentos
   clearAllSchedules() {
     this.timeouts.forEach(timeoutId => clearTimeout(timeoutId));
     this.timeouts = [];
   }
 
-  // Destructor
   destroy() {
     this.clearAllSchedules();
   }

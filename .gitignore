@@ -1,0 +1,71 @@
+# ================================================
+#   GITIGNORE PARA PROJECTO ELECTRON (Node.js)
+# ================================================
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# --- Logs ---
+logs/
+*.log
+*.gz
+*.pid
+*.seed
+*.pid.lock
+
+# --- Sistema Operativo ---
+.DS_Store
+Thumbs.db
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Build do Electron ---
+dist/
+build/
+out/
+release/
+*.asar
+
+# --- Electron Builder / Forge ---
+/dist/
+!dist/icon.ico
+!dist/icon.png
+
+# --- Cache ---
+.cache/
+electron-cache/
+electron-builder-cache/
+electron-*-cache/
+
+# --- Testes ---
+coverage/
+.nyc_output/
+
+# --- Ambiente ---
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Outros ---
+tmp/
+temp/
+*.temp
+*.bak
+
+# Arquivos exportados grandes
+*.zip
+*.tar
+*.tar.gz
+*.7z
