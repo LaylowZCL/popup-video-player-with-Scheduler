@@ -1,22 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Video Popup</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="video-container">
-      <video id="videoPlayer" autoplay muted playsinline>
-        Seu navegador não suporta o elemento de vídeo.
-      </video>
-      <button class="close-btn" id="closeButton">×</button>
-      <div class="progress-container" id="progressContainer">
-        <span id="currentTime">0:00</span>
-        <span> / </span>
-        <span id="duration">0:00</span>
-      </div>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Video Popup</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="video-container">
+    <video id="videoPlayer" autoplay muted playsinline>
+      Seu navegador não suporta o elemento de vídeo.
+    </video>
+    <button class="close-btn" id="closeButton">×</button>
+    <div class="progress-container" id="progressContainer">
+      <span id="currentTime">0:00</span>
+      <span> / </span>
+      <span id="duration">0:00</span>
     </div>
-    <script src="./script.js"></script>
-  </body>
+  </div>
+  <script src="./script.js"></script>
+
+  <!-- Adicione no final do body, antes do fechamento -->
+  <script>
+    // Função global para ser chamada do main.js
+    window.reportWindowClose = function () {
+        if (window.videoPlayer && !window.hasVideoCompleted && window.videoPlayer.currentTime > 0) {
+            // Chama a função que já existe no script.js
+            if (typeof reportVideoEvent === 'function') {
+                reportVideoEvent('video_interrupted', {
+                    final_position: window.videoPlayer.currentTime,
+                    interruption_reason: 'window_minimized',
+                    video_duration: window.videoDuration
+                });
+            }
+        }
+    };
+</script>
+</body>
+
 </html>

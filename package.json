@@ -14,14 +14,6 @@
     "dist:all": "electron-builder -w -m -l"
   },
 
-  "keywords": [
-    "electron",
-    "video",
-    "scheduler",
-    "popup",
-    "player"
-  ],
-
   "dependencies": {
     "axios": "^1.6.0"
   },
@@ -34,8 +26,11 @@
   "build": {
     "appId": "com.popup.videoplayer.scheduler",
     "productName": "Popup Video Scheduler",
-    "copyright": "© 2025 Fernando Z.",
     "asar": true,
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "forceCodeSigning": true,
 
     "directories": {
       "output": "dist",
@@ -50,8 +45,9 @@
 
     "win": {
       "target": ["nsis", "msi"],
-      "icon": "assets/icon.ico",
-      "sign": false
+      "certificateFile": "C:\\Users\\ferna\\Desktop\\certificado.pfx",
+      "certificatePassword": "senhaDoTeste",
+      "verifyUpdateCodeSignature": false
     },
 
     "nsis": {
