@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manual de Utilização do Dashboard Web</title>
+  <link rel="icon" type="image/png" href="../assets/images/logo-bm.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../assets/css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-bm shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand brand-wrap fw-semibold" href="../index.html">
+        <img src="../assets/images/logo-bm.png" alt="Logo BancoMoc" class="brand-logo">
+        <span>Documentação BancoMoc</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <a href="../index.html" class="btn btn-outline-primary btn-sm mb-3">Voltar ao índice</a>
+    <h1 class="h3">Manual de Utilização do Dashboard Web</h1>
+
+    <section class="doc-section">
+      <h2>1. Acesso e autenticação</h2>
+      <ol>
+        <li>Aceder ao URL oficial do Dashboard.</li>
+        <li>Autenticar-se com credenciais válidas.</li>
+        <li>Confirmar o perfil atribuído e permissões disponíveis.</li>
+      </ol>
+      <figure class="doc-figure">
+        <img src="../assets/images/dashboard/autenticacao.png" alt="Ecrã de autenticação">
+        <figcaption>Ecrã de autenticação do Dashboard.</figcaption>
+      </figure>
+    </section>
+
+    <section class="doc-section">
+      <h2>2. Gestão de vídeos</h2>
+      <figure class="doc-figure">
+        <img src="../assets/images/dashboard/gerenciamento-de-videos.png" alt="Gerenciamento de vídeos">
+        <figcaption>Painel de vídeos com acções operacionais.</figcaption>
+      </figure>
+
+      <h3>2.1 Botões e comandos (ecrã Vídeos)</h3>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Botão/controlo</th>
+              <th>Função</th>
+              <th>Resultado esperado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Sincronizar API</strong></td>
+              <td>Reconcilia registos com os ficheiros existentes na directoria de vídeos.</td>
+              <td>Actualiza duração/metadados, remove inválidos e evita duplicados.</td>
+            </tr>
+            <tr>
+              <td><strong>Upload Manual</strong></td>
+              <td>Abre popup para carregar novo vídeo para o sistema.</td>
+              <td>Novo vídeo criado com duração detectada e estado operacional.</td>
+            </tr>
+            <tr>
+              <td><strong>Campo de pesquisa</strong></td>
+              <td>Filtra por título/nome do vídeo.</td>
+              <td>Lista reduzida apenas aos itens correspondentes.</td>
+            </tr>
+            <tr>
+              <td><strong>Filtro de estado</strong></td>
+              <td>Filtra vídeos por estado (disponível, em cache, etc.).</td>
+              <td>Visualização focada para operação e auditoria.</td>
+            </tr>
+            <tr>
+              <td><strong>Limpar Filtros</strong></td>
+              <td>Repõe pesquisa e filtros para estado inicial.</td>
+              <td>Lista completa novamente visível.</td>
+            </tr>
+            <tr>
+              <td><strong>▶ Reproduzir</strong></td>
+              <td>Abre visualização do vídeo em popup interno.</td>
+              <td>Pré-visualização imediata para validação operacional.</td>
+            </tr>
+            <tr>
+              <td><strong>🗑 Eliminar</strong></td>
+              <td>Remove vídeo/registo (local ou cache, conforme origem).</td>
+              <td>Item removido da lista após confirmação.</td>
+            </tr>
+            <tr>
+              <td><strong>ℹ Detalhes</strong></td>
+              <td>Mostra dados técnicos e estado do item.</td>
+              <td>Informação contextual para diagnóstico.</td>
+            </tr>
+            <tr>
+              <td><strong>✎ Editar</strong></td>
+              <td>Abre popup de edição de metadados do vídeo.</td>
+              <td>Registo actualizado e reflectido na listagem.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2.2 Processo de upload de vídeo</h3>
+      <ol>
+        <li>Clicar em <strong>Upload Manual</strong>.</li>
+        <li>Preencher título e seleccionar ficheiro.</li>
+        <li>Confirmar duração detectada automaticamente.</li>
+        <li>Gravar e aguardar confirmação de sucesso.</li>
+        <li>Validar presença do vídeo na listagem e testar com <strong>▶ Reproduzir</strong>.</li>
+      </ol>
+      <figure class="doc-figure">
+        <img src="../assets/images/dashboard/carregamento-de-videos.png" alt="Carregamento de vídeos">
+        <figcaption>Popup de carregamento de vídeo.</figcaption>
+      </figure>
+
+      <h3>2.3 Processo de edição de vídeo</h3>
+      <ol>
+        <li>No cartão do vídeo, clicar em <strong>✎ Editar</strong>.</li>
+        <li>Actualizar os campos necessários.</li>
+        <li>Gravar alterações e confirmar mensagem de sucesso.</li>
+        <li>Revalidar dados na listagem.</li>
+      </ol>
+
+      <h3>2.4 Processo de eliminação de vídeo</h3>
+      <ol>
+        <li>No cartão do vídeo, clicar em <strong>🗑 Eliminar</strong>.</li>
+        <li>Confirmar acção no diálogo de segurança.</li>
+        <li>Verificar remoção na interface e ausência em pesquisas.</li>
+        <li>Executar <strong>Sincronizar API</strong> se necessário, para reconciliação final.</li>
+      </ol>
+    </section>
+
+    <section class="doc-section">
+      <h2>3. Agendamentos</h2>
+      <figure class="doc-figure">
+        <img src="../assets/images/dashboard/listar-agendamentos.png" alt="Listar agendamentos">
+        <figcaption>Listagem e estado dos agendamentos.</figcaption>
+      </figure>
+
+      <h3>3.1 Botões e acções</h3>
+      <ul>
+        <li><strong>Novo Agendamento:</strong> abre popup para criação.</li>
+        <li><strong>Editar:</strong> altera título, vídeo, horário, dias e monitor.</li>
+        <li><strong>Duplicar:</strong> cria cópia rápida para variações de horário.</li>
+        <li><strong>Activar/Desactivar:</strong> controla se o agendamento entra em execução.</li>
+        <li><strong>Eliminar:</strong> remove o agendamento seleccionado.</li>
+      </ul>
+
+      <h3>3.2 Criar agendamento (passo-a-passo)</h3>
+      <ol>
+        <li>Clicar em <strong>Novo Agendamento</strong>.</li>
+        <li>Definir título, vídeo, hora, dias e monitor.</li>
+        <li>Confirmar duração associada ao vídeo.</li>
+        <li>Gravar e validar o novo registo na lista.</li>
+      </ol>
+      <figure class="doc-figure">
+        <img src="../assets/images/dashboard/criar-agendamentos.png" alt="Criar agendamentos">
+        <figcaption>Popup de criação/edição de agendamento.</figcaption>
+      </figure>
+
+      <h3>3.3 Editar e eliminar agendamento</h3>
+      <ol>
+        <li>Seleccionar o item na lista.</li>
+        <li>Usar <strong>Editar</strong> para ajustes ou <strong>Eliminar</strong> para remoção.</li>
+        <li>Confirmar alterações e testar execução no horário seguinte.</li>
+      </ol>
+    </section>
+
+    <section class="doc-section">
+      <h2>4. Utilizadores e permissões</h2>
+      <figure class="doc-figure">
+        <img src="../assets/images/dashboard/gestao-de-usuarios.png" alt="Gestão de utilizadores">
+        <figcaption>Painel de utilizadores e perfis.</figcaption>
+      </figure>
+
+      <h3>4.1 Regras de permissão</h3>
+      <ul>
+        <li><strong>Administrador:</strong> cria e edita qualquer utilizador.</li>
+        <li><strong>Manager:</strong> cria Manager e perfis inferiores.</li>
+        <li><strong>Utilizador autenticado:</strong> pode editar o próprio perfil.</li>
+      </ul>
+
+      <h3>4.2 Adicionar utilizador</h3>
+      <ol>
+        <li>Clicar em <strong>Adicionar Utilizador</strong>.</li>
+        <li>Preencher nome, e-mail, perfil e credenciais.</li>
+        <li>Gravar e validar a nova conta na lista.</li>
+      </ol>
+      <figure class="doc-figure">
+        <img src="../assets/images/dashboard/adicionar-usuario.png" alt="Adicionar utilizador">
+        <figcaption>Popup para criação de utilizador.</figcaption>
+      </figure>
+
+      <h3>4.3 Editar e desactivar utilizador</h3>
+      <ol>
+        <li>Localizar o utilizador na lista.</li>
+        <li>Usar <strong>Editar</strong> para actualizar dados e perfil.</li>
+        <li>Usar <strong>Desactivar/Eliminar</strong> conforme política interna.</li>
+      </ol>
+    </section>
+
+    <section class="doc-section">
+      <h2>5. Relatórios e monitorização</h2>
+      <ul>
+        <li>Consultar <strong>Relatórios Recentes</strong> com paginação numérica.</li>
+        <li>Interpretar eventos por texto intuitivo (não técnico) no frontend.</li>
+        <li>Verificar plataformas reportadas (Windows, macOS, Linux).</li>
+        <li>Priorizar correcção de <strong>playback_error</strong>, interrupções e ausência de vídeo.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

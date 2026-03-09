@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ficha Técnica</title>
+  <link rel="icon" type="image/png" href="../assets/images/logo-bm.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../assets/css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-bm shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand brand-wrap fw-semibold" href="../index.html">
+        <img src="../assets/images/logo-bm.png" alt="Logo BancoMoc" class="brand-logo">
+        <span>Documentação BancoMoc</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <a href="../index.html" class="btn btn-outline-primary btn-sm mb-3">Voltar ao índice</a>
+    <h1 class="h3">Ficha Técnica</h1>
+    <p class="text-secondary">Modelo de preenchimento com variáveis essenciais.</p>
+
+    <section class="doc-section">
+      <h2>1. Identificação da solução</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <tbody>
+            <tr><th style="width:35%">Nome da solução</th><td>[NOME_DA_SOLUCAO]</td></tr>
+            <tr><th>Versão funcional</th><td>[VERSAO_FUNCIONAL]</td></tr>
+            <tr><th>Código interno/projecto</th><td>[CODIGO_INTERNO]</td></tr>
+            <tr><th>Estado</th><td>[ACTIVO_EM_VALIDACAO_DESCONTINUADO]</td></tr>
+            <tr><th>Data de entrada em produção</th><td>[AAAA-MM-DD]</td></tr>
+            <tr><th>Âmbito geográfico</th><td>[AMBITO_GEOGRAFICO]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2>2. Intervenientes</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Função</th>
+              <th>Nome</th>
+              <th>Organização</th>
+              <th>Contacto</th>
+              <th>Responsabilidades</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Engenheiro de Software</td>
+              <td>Fernando Zucula</td>
+              <td>[ORGANIZACAO]</td>
+              <td>[EMAIL_TELEFONE]</td>
+              <td>Desenvolvimento, integração técnica, manutenção evolutiva e correcções.</td>
+            </tr>
+            <tr><td>[FUNCAO_1]</td><td>[NOME_1]</td><td>[ORGANIZACAO_1]</td><td>[CONTACTO_1]</td><td>[RESPONSABILIDADES_1]</td></tr>
+            <tr><td>[FUNCAO_2]</td><td>[NOME_2]</td><td>[ORGANIZACAO_2]</td><td>[CONTACTO_2]</td><td>[RESPONSABILIDADES_2]</td></tr>
+            <tr><td>[FUNCAO_3]</td><td>[NOME_3]</td><td>[ORGANIZACAO_3]</td><td>[CONTACTO_3]</td><td>[RESPONSABILIDADES_3]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2>3. Componentes e repositórios</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr><th>Componente</th><th>Repositório</th><th>Branch principal</th><th>Versão</th><th>Responsável</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dashboard/API Laravel</td><td>[URL_REPO_LARAVEL]</td><td>[BRANCH_LARAVEL]</td><td>[VERSAO_LARAVEL]</td><td>[RESPONSAVEL_LARAVEL]</td></tr>
+            <tr><td>Aplicação Desktop</td><td>[URL_REPO_APLICACAO_DESKTOP]</td><td>[BRANCH_APLICACAO_DESKTOP]</td><td>[VERSAO_APLICACAO_DESKTOP]</td><td>[RESPONSAVEL_APLICACAO_DESKTOP]</td></tr>
+            <tr><td>Documentação</td><td>[URL_REPO_DOCUMENTACAO]</td><td>[BRANCH_DOCUMENTACAO]</td><td>[VERSAO_DOCUMENTACAO]</td><td>[RESPONSAVEL_DOCUMENTACAO]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2>4. Infra-estrutura e ambientes</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <tbody>
+            <tr><th style="width:35%">Ambiente de desenvolvimento</th><td>[URL_OU_HOST_DEV]</td></tr>
+            <tr><th>Ambiente de homologação</th><td>[URL_OU_HOST_HML]</td></tr>
+            <tr><th>Ambiente de produção</th><td>[URL_OU_HOST_PRD]</td></tr>
+            <tr><th>Base de dados</th><td>[TIPO_VERSAO_TOPOLOGIA]</td></tr>
+            <tr><th>Armazenamento de vídeos</th><td>[DIRECTORIA_STORAGE_POLITICA]</td></tr>
+            <tr><th>CDN/Proxy/Balanceador</th><td>[SIM_NAO_FORNECEDOR_CONFIG]</td></tr>
+            <tr><th>Sistema de monitorização</th><td>[FERRAMENTA_MONITORIZACAO]</td></tr>
+            <tr><th>Sistema de logs</th><td>[FERRAMENTA_LOGS_RETENCAO]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2>5. Segurança e conformidade</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <tbody>
+            <tr><th style="width:35%">TLS/HTTPS obrigatório</th><td>[SIM_NAO]</td></tr>
+            <tr><th>Política de rotação de chaves</th><td>[PERIODICIDADE_RESPONSAVEL]</td></tr>
+            <tr><th>Gestão de perfis e permissões</th><td>[MATRIZ_PERFIS]</td></tr>
+            <tr><th>Auditoria de acções</th><td>[SIM_NAO_LOCAL_RETENCAO]</td></tr>
+            <tr><th>Protecção de dados pessoais</th><td>[POLITICA_REFERENCIA]</td></tr>
+            <tr><th>Norma/compliance aplicável</th><td>[NORMA_1_NORMA_2]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2>6. Operação e suporte</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <tbody>
+            <tr><th style="width:35%">SLA (disponibilidade)</th><td>[SLA_PERCENTAGEM]</td></tr>
+            <tr><th>SLO (latência/erros)</th><td>[SLO_METRICAS]</td></tr>
+            <tr><th>Janela de manutenção</th><td>[DIA_HORA_FUSO]</td></tr>
+            <tr><th>Processo de incidentes</th><td>[FLUXO_INCIDENTE]</td></tr>
+            <tr><th>Canal de suporte N1</th><td>[EMAIL_TELEFONE_PORTAL]</td></tr>
+            <tr><th>Canal de suporte N2/N3</th><td>[EMAIL_TELEFONE_PORTAL]</td></tr>
+            <tr><th>Escalonamento crítico</th><td>[MATRIZ_ESCALONAMENTO]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2>7. Backup e recuperação</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <tbody>
+            <tr><th style="width:35%">Periodicidade de backup</th><td>[DIARIO_SEMANAL]</td></tr>
+            <tr><th>Retenção de backups</th><td>[N_DIAS_OU_MESES]</td></tr>
+            <tr><th>RPO</th><td>[RPO_VALOR]</td></tr>
+            <tr><th>RTO</th><td>[RTO_VALOR]</td></tr>
+            <tr><th>Teste de restauro</th><td>[PERIODICIDADE_ULTIMA_DATA]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2>8. Controlo documental</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <tbody>
+            <tr><th style="width:35%">Autor do documento</th><td>[AUTOR_DOCUMENTO]</td></tr>
+            <tr><th>Revisor</th><td>[REVISOR_DOCUMENTO]</td></tr>
+            <tr><th>Aprovador</th><td>[APROVADOR_DOCUMENTO]</td></tr>
+            <tr><th>Versão do documento</th><td>[VERSAO_DOCUMENTO]</td></tr>
+            <tr><th>Data da última revisão</th><td>[AAAA-MM-DD]</td></tr>
+            <tr><th>Próxima revisão prevista</th><td>[AAAA-MM-DD]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

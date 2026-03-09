@@ -1,23 +1,26 @@
 const axios = require("axios");
 const config = require("./config");
+const { createLogger } = require("./logger");
+const logger = createLogger("api-client");
 
 class ApiClient {
   constructor() {
     this.lastVideoUpdate = null;
     this.lastScheduleUpdate = null;
     this.currentVideoId = null;
+    this.currentScheduleId = null;
     this.currentVideoTitle = null;
     this.currentVideoUrl = null;
     this.sessionId = this.generateSessionId();
     this.isAuthenticated = false;
     this.videosCount = 0;
     
-    console.log("🔧 ApiClient inicializado");
+    logger.info("🔧 ApiClient inicializado");
   }
 
   async testAuthentication() {
     try {
-      console.log("🔑 Testando autenticação...");
+      logger.info("🔑 Testando autenticação...");
       const response = await axios.get(
         config.API.BASE_URL + config.API.ENDPOINTS.VIDEOS,
         {
@@ -28,12 +31,12 @@ class ApiClient {
 
       if (response.data) {
         this.isAuthenticated = true;
-        console.log("✅ Autenticação bem-sucedida");
+        logger.info("✅ Autenticação bem-sucedida");
         return true;
       }
     } catch (error) {
       this.isAuthenticated = false;
-      console.error("❌ Falha na autenticação:", error.message);
+      logger.error("❌ Falha na autenticação:", error.message);
     }
 
     return false;
@@ -41,7 +44,7 @@ class ApiClient {
 
   async getNextVideo() {
     try {
-      console.log("🎬 Obtendo próximo vídeo...");
+      logger.info("🎬 Obtendo próximo vídeo...");
       const response = await axios.get(
         config.API.BASE_URL + config.API.ENDPOINTS.VIDEOS,
         {
@@ -55,22 +58,22 @@ class ApiClient {
       // Tentar diferentes formatos de resposta
       if (response.data && response.data.videos && Array.isArray(response.data.videos)) {
         videos = response.data.videos;
-        console.log(`📊 Formato 1: ${videos.length} vídeos encontrados`);
+        logger.info(`📊 Formato 1: ${videos.length} vídeos encontrados`);
       } else if (Array.isArray(response.data)) {
         videos = response.data;
-        console.log(`📊 Formato 2: ${videos.length} vídeos encontrados`);
+        logger.info(`📊 Formato 2: ${videos.length} vídeos encontrados`);
       } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
         videos = response.data.data;
-        console.log(`📊 Formato 3: ${videos.length} vídeos encontrados`);
+        logger.info(`📊 Formato 3: ${videos.length} vídeos encontrados`);
       }
 
       if (videos.length === 0) {
-        console.warn("⚠️ Nenhum vídeo disponível, usando fallback");
+        logger.warn("⚠️ Nenhum vídeo disponível, usando fallback");
         return this.getFallbackVideo();
       }
 
       // Log da estrutura do primeiro vídeo para debug
-      console.log("🔍 Estrutura do primeiro vídeo:", JSON.stringify(videos[0], null, 2));
+      logger.info("🔍 Estrutura do primeiro vídeo:", JSON.stringify(videos[0], null, 2));
 
       // Selecionar vídeo aleatório
       const randomIndex = Math.floor(Math.random() * videos.length);
@@ -78,16 +81,18 @@ class ApiClient {
 
       // Extrair dados do vídeo com base na estrutura esperada
       // IMPORTANTE: Ajuste estas linhas conforme a estrutura real da sua API
-      const videoId = video.video_id || video.id || `video_${Date.now()}`;
+      const scheduleId = video.id || `schedule_${Date.now()}`;
+      const videoId = video.video_id || null;
       const videoTitle = video.title || video.name || video.filename || "Vídeo";
       const videoUrl = video.video_url || video.url || video.file_url || video.url_arquivo;
 
       // Armazenar dados atuais
       this.currentVideoId = videoId;
+      this.currentScheduleId = scheduleId;
       this.currentVideoTitle = videoTitle;
       this.currentVideoUrl = videoUrl;
 
-      console.log("✅ Vídeo selecionado:", {
+      logger.info("✅ Vídeo selecionado:", {
         id: this.currentVideoId,
         title: this.currentVideoTitle,
         url: this.currentVideoUrl ? this.currentVideoUrl.substring(0, 50) + "..." : "null"
@@ -96,13 +101,14 @@ class ApiClient {
       return {
         url: videoUrl,
         title: videoTitle,
-        id: videoId,
-        scheduleId: video.schedule_id || video.id, // ID do schedule se disponível
+        id: scheduleId,
+        videoId: videoId,
+        scheduleId: scheduleId,
         videoData: video // Dados completos para referência
       };
 
     } catch (error) {
-      console.error("❌ Erro ao obter vídeo:", error.message);
+      logger.error("❌ Erro ao obter vídeo:", error.message);
       return this.getFallbackVideo();
     }
   }
@@ -145,7 +151,7 @@ class ApiClient {
       };
 
     } catch (error) {
-      console.error("❌ Erro ao verificar atualizações:", error.message);
+      logger.error("❌ Erro ao verificar atualizações:", error.message);
       return { hasUpdates: false, count: 0, newVideos: 0 };
     }
   }
@@ -168,15 +174,15 @@ class ApiClient {
         .filter((time) => time !== null);
 
       if (formattedTimes.length > 0) {
-        console.log("⏰ Horários obtidos:", formattedTimes);
+        logger.info("⏰ Horários obtidos:", formattedTimes);
         return formattedTimes;
       }
 
-      console.log("⏰ Usando horários padrão");
+      logger.info("⏰ Usando horários padrão");
       return config.APP.DEFAULT_SCHEDULE;
 
     } catch (error) {
-      console.error("❌ Erro ao obter horários:", error.message);
+      logger.error("❌ Erro ao obter horários:", error.message);
       return config.APP.DEFAULT_SCHEDULE;
     }
   }
@@ -203,7 +209,7 @@ class ApiClient {
       return newSchedule !== currentSchedule && formattedTimes.length > 0;
 
     } catch (error) {
-      console.error("❌ Erro ao verificar horários:", error.message);
+      logger.error("❌ Erro ao verificar horários:", error.message);
       return false;
     }
   }
@@ -211,14 +217,15 @@ class ApiClient {
   async reportVideoView(videoData = {}) {
     try {
       // Usar dados do vídeo atual se não fornecidos
-      const videoId = videoData.video_id || videoData.videoId || this.currentVideoId || 'unknown_video_id';
+      const rawVideoId = videoData.video_id || videoData.videoId || this.currentVideoId || null;
+      const videoId = this.normalizeVideoId(rawVideoId);
       const videoTitle = videoData.video_title || videoData.videoTitle || this.currentVideoTitle || 'Vídeo';
 
       const reportData = {
         video_id: videoId,
         video_title: videoTitle,
         timestamp: videoData.timestamp || new Date().toISOString(),
-        event_type: videoData.event_type || "video_viewed",
+        event_type: videoData.event_type || "popup_opened",
         playback_position: videoData.playback_position || 0,
         playback_duration: videoData.playback_duration || 0,
         video_duration: videoData.video_duration || 0,
@@ -234,7 +241,7 @@ class ApiClient {
         completed_loop: videoData.completed_loop || false,
       };
 
-      console.log("📤 Enviando report para API:", {
+      logger.info("📤 Enviando report para API:", {
         endpoint: config.API.BASE_URL + config.API.ENDPOINTS.REPORT,
         event: reportData.event_type,
         video_id: reportData.video_id,
@@ -250,7 +257,7 @@ class ApiClient {
         }
       );
 
-      console.log("✅ Report enviado com sucesso:", {
+      logger.info("✅ Report enviado com sucesso:", {
         event: reportData.event_type,
         status: response.status
       });
@@ -258,9 +265,37 @@ class ApiClient {
       return true;
 
     } catch (error) {
-      console.error("❌ Erro ao enviar report:", {
+      logger.error("❌ Erro ao enviar report:", {
         message: error.message,
-        response: error.response?.data,
+        status: error.response?.status,
+        code: error.code || null,
+      });
+      return false;
+    }
+  }
+
+  async ping(eventType = "heartbeat") {
+    try {
+      const payload = {
+        client_id: config.API.AUTH.CLIENT_ID,
+        app_version: config.APP.VERSION,
+        platform: process.platform,
+        event_type: eventType
+      };
+
+      const response = await axios.post(
+        config.API.BASE_URL + config.API.ENDPOINTS.PING,
+        payload,
+        {
+          headers: this.getAuthHeaders(),
+          timeout: 5000,
+        }
+      );
+
+      return response.status >= 200 && response.status < 300;
+    } catch (error) {
+      logger.error("❌ Erro no ping:", {
+        message: error.message,
         status: error.response?.status
       });
       return false;
@@ -325,8 +360,15 @@ class ApiClient {
     return null;
   }
 
+  normalizeVideoId(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return null;
+    return Number.isInteger(num) ? num : Math.floor(num);
+  }
+
   getFallbackVideo() {
-    console.log("🔄 Usando vídeo de fallback");
+    logger.info("🔄 Usando vídeo de fallback");
     
     this.currentVideoId = "fallback_bunny_001";
     this.currentVideoTitle = "Big Buck Bunny (Fallback)";

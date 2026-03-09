@@ -12,7 +12,8 @@ class ConfigManager {
   getDefaultConfig() {
     return {
       api: {
-        baseUrl: "https://dev.fernandozucula.com/api",
+        // baseUrl: "https://dev.fernandozucula.com/api", // produção
+        baseUrl: "http://127.0.0.1:8000/api",
         endpoints: {
           videos: "/scheduled/videos",
           schedule: "/schedules/clients",

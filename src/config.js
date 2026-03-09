@@ -1,10 +1,12 @@
 module.exports = {
   API: {
-    BASE_URL: 'https://dev.fernandozucula.com/api',
+    // BASE_URL: "http://127.0.0.1:8000/api", // OBRIGATORIO: alterar para https://dominiodaapi.com/api antes de compilar para producao.
+    BASE_URL: 'http://127.0.0.1:8000/api',
     ENDPOINTS: {
       VIDEOS: '/scheduled/videos',
       SCHEDULE: '/schedules/clients',
-      REPORT: '/videos/report'
+      REPORT: '/videos/report',
+      PING: '/ping'
     },
     AUTH: {
       API_KEY: 'VIDEO_POPUP_SECRET_2025',
@@ -16,7 +18,7 @@ module.exports = {
   },
   
   APP: {
-    NAME: 'Video Popup Scheduler',
+    NAME: 'Banco Moc Popup Video',
     VERSION: '1.0.0',
     AUTO_START: true,
     VIDEO_LOOP: true,

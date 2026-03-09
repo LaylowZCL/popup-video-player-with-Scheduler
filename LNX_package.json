@@ -9,8 +9,8 @@
     "start": "electron .",
     "dev": "electron . --inspect=5858",
     "debug": "electron . --remote-debugging-port=9222",
-    "dist": "npm run dist:mac",
-    "dist:mac": "electron-builder --mac"
+    "dist": "npm run dist:linux",
+    "dist:linux": "electron-builder --linux"
   },
   "dependencies": {
     "axios": "^1.6.0"
@@ -36,13 +36,13 @@
       "assets/**/*",
       "package.json"
     ],
-    "mac": {
-      "icon": "assets/icons/icon.icns",
+    "linux": {
+      "icon": "assets/icons/icon.png",
       "target": [
-        "dmg",
-        "zip"
+        "AppImage",
+        "deb"
       ],
-      "category": "public.app-category.utilities"
+      "category": "Utility"
     }
   }
 }

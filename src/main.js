@@ -1,6 +1,106 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
-app.setName("Popup Video Player");
+const { app, BrowserWindow, ipcMain, nativeImage, Menu } = require("electron");
 const path = require("path");
+const fs = require("fs");
+const { createLogger } = require("./logger");
+const logger = createLogger("main");
+
+const APP_DISPLAY_NAME = "Banco Moc Popup Video";
+app.setName(APP_DISPLAY_NAME);
+app.name = APP_DISPLAY_NAME;
+
+const APP_ICON_PNG = path.join(__dirname, "../assets/icons/icon.png");
+const APP_ICON_ICO = path.join(__dirname, "../assets/icons/icon.ico");
+const APP_ICON_ICNS = path.join(__dirname, "../assets/icons/icon.icns");
+
+function setDockIconSafely() {
+  if (process.platform !== "darwin" || !app.dock) {
+    return;
+  }
+
+  // In dev mode, prefer PNG because some local .icns files are rejected by Electron.
+  const iconCandidates = [APP_ICON_PNG, APP_ICON_ICNS];
+  for (const iconPath of iconCandidates) {
+    try {
+      if (!fs.existsSync(iconPath)) {
+        continue;
+      }
+      const iconImage = nativeImage.createFromPath(iconPath);
+      if (!iconImage.isEmpty()) {
+        app.dock.setIcon(iconImage);
+        return;
+      }
+    } catch (error) {
+      logger.warn(`Falha ao carregar icon: ${iconPath}`, error.message);
+    }
+  }
+}
+
+function setApplicationMenu() {
+  const isMac = process.platform === "darwin";
+  const template = [
+    ...(isMac
+      ? [
+          {
+            label: APP_DISPLAY_NAME,
+            submenu: [
+              { role: "about", label: `Sobre ${APP_DISPLAY_NAME}` },
+              { type: "separator" },
+              { role: "services" },
+              { type: "separator" },
+              { role: "hide" },
+              { role: "hideOthers" },
+              { role: "unhide" },
+              { type: "separator" },
+              { role: "quit", label: `Sair de ${APP_DISPLAY_NAME}` },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: "File",
+      submenu: [isMac ? { role: "close" } : { role: "quit" }],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [
+        { role: "minimize" },
+        { role: "zoom" },
+        ...(isMac ? [{ type: "separator" }, { role: "front" }] : [{ role: "close" }]),
+      ],
+    },
+    {
+      role: "help",
+      submenu: [{ label: APP_DISPLAY_NAME, enabled: false }],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+if (process.platform === "win32") {
+  app.setAppUserModelId("com.bancomoc.popupvideo");
+}
 const TrayManager = require("./trayManager");
 const Scheduler = require("./scheduler");
 const ApiClient = require("./apiClient");
@@ -15,13 +115,19 @@ let intervals = [];
 let isVideoPlaying = false;
 
 app.whenReady().then(async () => {
-  console.log("🚀 Aplicação inicializando...");
+  app.setName(APP_DISPLAY_NAME);
+  app.name = APP_DISPLAY_NAME;
+  app.setAboutPanelOptions({ applicationName: APP_DISPLAY_NAME });
+  setDockIconSafely();
+  setApplicationMenu();
+
+  logger.info("🚀 Aplicação inicializando...");
   
   apiClient = new ApiClient();
 
   // Testar autenticação
   const authResult = await apiClient.testAuthentication();
-  console.log("🔑 Autenticação:", authResult ? "✅ Sucesso" : "❌ Falha");
+  logger.info("🔑 Autenticação:", authResult ? "✅ Sucesso" : "❌ Falha");
 
   // Inicializar tray manager
   trayManager = new TrayManager(app);
@@ -29,15 +135,15 @@ app.whenReady().then(async () => {
   trayManager.on("minimize-window", minimizeVideoWindow);
   trayManager.on("reload-video", () => showVideoPopup("manual-reload"));
   trayManager.on("check-videos", () => {
-    console.log("🔍 Verificando novos vídeos...");
+    logger.info("🔍 Verificando novos vídeos...");
     apiClient.checkVideoUpdates();
   });
   trayManager.on("check-schedule", () => {
-    console.log("⏰ Verificando horários...");
+    logger.info("⏰ Verificando horários...");
     apiClient.checkScheduleUpdates();
   });
   trayManager.on("quit-app", () => {
-    console.log("🛑 Saindo da aplicação...");
+    logger.info("🛑 Saindo da aplicação...");
     isQuitting = true;
     cleanup();
     app.quit();
@@ -46,7 +152,7 @@ app.whenReady().then(async () => {
   // Inicializar scheduler
   scheduler = new Scheduler({
     onTrigger: () => {
-      console.log("⏰ Trigger do scheduler executado");
+      logger.info("⏰ Trigger do scheduler executado");
       showVideoPopup("scheduled");
     },
     apiClient: apiClient
@@ -54,12 +160,12 @@ app.whenReady().then(async () => {
 
   // Handlers IPC
   ipcMain.on("minimize-window", () => {
-    console.log("📥 IPC: minimize-window recebido");
+    logger.info("📥 IPC: minimize-window recebido");
     minimizeVideoWindow();
   });
 
   ipcMain.on("report-video-view", async (event, videoData) => {
-    console.log("📊 IPC: report-video-view recebido:", {
+    logger.info("📊 IPC: report-video-view recebido:", {
       event_type: videoData.event_type,
       video_id: videoData.video_id,
       video_title: videoData.video_title
@@ -76,32 +182,44 @@ app.whenReady().then(async () => {
         
         const result = await apiClient.reportVideoView(formattedData);
         if (result) {
-          console.log("✅ Report enviado com sucesso");
+          logger.info("✅ Report enviado com sucesso");
         } else {
-          console.warn("⚠️ Falha ao enviar report");
+          logger.warn("⚠️ Falha ao enviar report");
         }
       } catch (error) {
-        console.error("❌ Erro ao processar report:", error.message);
+        logger.error("❌ Erro ao processar report:", error.message);
       }
     } else {
-      console.warn("⚠️ API não autenticada, ignorando report");
+      logger.warn("⚠️ API não autenticada, ignorando report");
     }
   });
 
   // Intervalos para verificações periódicas
+  const pingInterval = setInterval(async () => {
+    try {
+      if (apiClient.isAuthenticated) {
+        await apiClient.ping("heartbeat");
+      }
+    } catch (error) {
+      logger.error("❌ Erro no ping:", error.message);
+    }
+  }, 5 * 60 * 1000); // 5 minutos
+
+  intervals.push(pingInterval);
+
   const scheduleCheckInterval = setInterval(async () => {
     try {
       if (apiClient.isAuthenticated) {
-        console.log("⏰ Verificando atualizações de horário...");
+        logger.info("⏰ Verificando atualizações de horário...");
         const hasUpdates = await apiClient.checkScheduleUpdates();
         if (hasUpdates && scheduler) {
-          console.log("🔄 Atualizando horários do scheduler...");
+          logger.info("🔄 Atualizando horários do scheduler...");
           const newSchedule = await apiClient.getScheduleTimes();
           scheduler.updateScheduleTimes(newSchedule);
         }
       }
     } catch (error) {
-      console.error("❌ Erro na verificação de horários:", error.message);
+      logger.error("❌ Erro na verificação de horários:", error.message);
     }
   }, 60 * 60 * 1000); // 1 hora
 
@@ -110,32 +228,36 @@ app.whenReady().then(async () => {
   const videoCheckInterval = setInterval(async () => {
     try {
       if (apiClient.isAuthenticated) {
-        console.log("🔍 Verificando novos vídeos...");
+        logger.info("🔍 Verificando novos vídeos...");
         const videoUpdates = await apiClient.checkVideoUpdates();
         if (videoUpdates.hasUpdates) {
-          console.log(`🎬 ${videoUpdates.newVideos} novos vídeos disponíveis`);
+          logger.info(`🎬 ${videoUpdates.newVideos} novos vídeos disponíveis`);
         }
       }
     } catch (error) {
-      console.error("❌ Erro na verificação de vídeos:", error.message);
+      logger.error("❌ Erro na verificação de vídeos:", error.message);
     }
   }, 2 * 60 * 60 * 1000); // 2 horas
 
   intervals.push(videoCheckInterval);
 
-  console.log("✅ Aplicação inicializada com sucesso");
+  logger.info("✅ Aplicação inicializada com sucesso");
+
+  if (apiClient.isAuthenticated) {
+    apiClient.ping("startup").catch(() => {});
+  }
 });
 
 function toggleVideoWindow() {
   if (videoWindow && !videoWindow.isDestroyed() && videoWindow.isVisible()) {
-    console.log("📥 Alternando: minimizando janela");
+    logger.info("📥 Alternando: minimizando janela");
     minimizeVideoWindow();
   } else if (
     videoWindow &&
     !videoWindow.isDestroyed() &&
     !videoWindow.isVisible()
   ) {
-    console.log("📤 Alternando: mostrando janela");
+    logger.info("📤 Alternando: mostrando janela");
     videoWindow.show();
     videoWindow.focus();
     videoWindow.setAlwaysOnTop(true, "screen-saver");
@@ -150,46 +272,47 @@ function toggleVideoWindow() {
             const video = document.getElementById('videoPlayer');
             if (video) {
               video.currentTime = 0;
-              video.play().catch(e => console.log('Erro ao dar play:', e));
+              video.play().catch(() => {});
             }
           } catch(e) {
-            console.log('Erro no JS:', e);
+            // noop
           }
         `)
-        .catch((err) => console.error("Erro ao executar JS:", err));
+        .catch((err) => logger.error("Erro ao executar JS:", err));
     }
   } else {
-    console.log("🎬 Criando nova janela de vídeo");
+    logger.info("🎬 Criando nova janela de vídeo");
     showVideoPopup("manual");
   }
 }
 
 async function showVideoPopup(triggerType = "scheduled") {
-  console.log("🎬 Mostrando popup, trigger:", triggerType);
+  logger.info("🎬 Mostrando popup, trigger:", triggerType);
 
   if (videoWindow && !videoWindow.isDestroyed() && videoWindow.isVisible()) {
-    console.log("📝 Janela já visível, apenas focando");
+    logger.info("📝 Janela já visível, apenas focando");
     videoWindow.focus();
     return;
   }
 
   try {
     const videoData = await apiClient.getNextVideo();
-    console.log("📥 Dados do vídeo obtidos:", {
+    logger.info("📥 Dados do vídeo obtidos:", {
       id: videoData.id,
       title: videoData.title,
       hasUrl: !!videoData.url
     });
 
     if (!videoData || !videoData.url) {
-      console.error("❌ Não foi possível obter o vídeo");
+      logger.error("❌ Não foi possível obter o vídeo");
       trayManager.showNotification("Erro", "Não foi possível obter o vídeo");
       return;
     }
 
     const queryParams = new URLSearchParams({
       videoUrl: videoData.url,
-      videoId: videoData.id,
+      videoId: videoData.videoId || "",
+      scheduleId: videoData.scheduleId || "",
       videoTitle: videoData.title || "Vídeo",
       triggerType: triggerType,
     }).toString();
@@ -199,7 +322,7 @@ async function showVideoPopup(triggerType = "scheduled") {
 
     if (videoWindow && !videoWindow.isDestroyed()) {
       // Reutilizar janela existente
-      console.log("🔄 Reutilizando janela existente");
+      logger.info("🔄 Reutilizando janela existente");
       await videoWindow.loadURL(videoUrlWithParams);
       videoWindow.show();
       videoWindow.focus();
@@ -208,8 +331,9 @@ async function showVideoPopup(triggerType = "scheduled") {
       isVideoPlaying = true;
     } else {
       // Criar nova janela
-      console.log("🆕 Criando nova janela");
+      logger.info("🆕 Criando nova janela");
       const windowOptions = {
+        icon: process.platform === "win32" ? APP_ICON_ICO : APP_ICON_PNG,
         width: config.WINDOW.WIDTH,
         height: config.WINDOW.HEIGHT,
         alwaysOnTop: config.WINDOW.ALWAYS_ON_TOP,
@@ -218,9 +342,10 @@ async function showVideoPopup(triggerType = "scheduled") {
         show: true,
         backgroundColor: "#000000",
         webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
-          webSecurity: false,
+          nodeIntegration: false,
+          contextIsolation: true,
+          webSecurity: true,
+          preload: path.join(__dirname, "preload.js"),
         },
         focusable: true,
         modal: false,
@@ -234,7 +359,7 @@ async function showVideoPopup(triggerType = "scheduled") {
       await videoWindow.loadURL(videoUrlWithParams);
 
       videoWindow.on("ready-to-show", () => {
-        console.log("✅ Janela pronta para mostrar");
+        logger.info("✅ Janela pronta para mostrar");
         videoWindow.show();
         videoWindow.focus();
         videoWindow.setAlwaysOnTop(true, "screen-saver");
@@ -251,32 +376,32 @@ async function showVideoPopup(triggerType = "scheduled") {
               event_type: "popup_opened",
               trigger_type: triggerType,
             })
-            .catch((err) => console.error("Erro ao reportar abertura:", err));
+            .catch((err) => logger.error("Erro ao reportar abertura:", err));
         }
       });
 
       videoWindow.on("close", (event) => {
         if (!isQuitting) {
-          console.log("📥 Tentativa de fechar janela, minimizando em vez disso");
+          logger.info("📥 Tentativa de fechar janela, minimizando em vez disso");
           event.preventDefault();
           minimizeVideoWindow();
         }
       });
 
       videoWindow.on("closed", () => {
-        console.log("🗑️ Janela fechada");
+        logger.info("🗑️ Janela fechada");
         videoWindow = null;
         isVideoPlaying = false;
       });
 
       videoWindow.webContents.on("did-finish-load", () => {
-        console.log("🌐 Conteúdo da janela carregado");
+        logger.info("🌐 Conteúdo da janela carregado");
       });
 
       videoWindow.webContents.setBackgroundThrottling(false);
     }
   } catch (error) {
-    console.error("❌ Erro ao mostrar popup:", error);
+    logger.error("❌ Erro ao mostrar popup:", error);
     
     if (videoWindow && !videoWindow.isDestroyed()) {
       videoWindow.destroy();
@@ -291,36 +416,22 @@ async function showVideoPopup(triggerType = "scheduled") {
 function minimizeVideoWindow() {
   if (videoWindow && !videoWindow.isDestroyed()) {
     try {
-      console.log("📥 Minimizando janela...");
+      logger.info("📥 Minimizando janela...");
       
       // Chamar função no renderer para reportar antes de minimizar
-      videoWindow.webContents
-        .executeJavaScript(`
-          if (typeof window.reportWindowClose === 'function') {
-            window.reportWindowClose();
-          }
-          return true;
-        `)
-        .then(() => {
-          videoWindow.hide();
-          trayManager.showInTray();
-          isVideoPlaying = false;
-          console.log("✅ Janela minimizada");
-        })
-        .catch((err) => {
-          console.error("❌ Erro ao executar reportWindowClose:", err);
-          videoWindow.hide();
-          trayManager.showInTray();
-          isVideoPlaying = false;
-        });
+      videoWindow.webContents.send("window-close-request");
+      videoWindow.hide();
+      trayManager.showInTray();
+      isVideoPlaying = false;
+      logger.info("✅ Janela minimizada");
     } catch (error) {
-      console.error("❌ Erro ao minimizar janela:", error);
+      logger.error("❌ Erro ao minimizar janela:", error);
     }
   }
 }
 
 function cleanup() {
-  console.log("🧹 Limpando recursos...");
+  logger.info("🧹 Limpando recursos...");
   
   intervals.forEach((interval) => clearInterval(interval));
   intervals = [];
@@ -336,11 +447,11 @@ function cleanup() {
   }
 
   isVideoPlaying = false;
-  console.log("✅ Limpeza concluída");
+  logger.info("✅ Limpeza concluída");
 }
 
 app.on("will-quit", (event) => {
-  console.log("🛑 Aplicação será encerrada");
+  logger.info("🛑 Aplicação será encerrada");
   if (!isQuitting) {
     isQuitting = true;
     cleanup();
@@ -348,12 +459,12 @@ app.on("will-quit", (event) => {
 });
 
 app.on("window-all-closed", () => {
-  console.log("🚪 Todas as janelas fechadas");
+  logger.info("🚪 Todas as janelas fechadas");
   // Não sair da aplicação para manter no tray
 });
 
 app.on("activate", () => {
-  console.log("🔘 Aplicação ativada");
+  logger.info("🔘 Aplicação ativada");
   if (videoWindow === null && !isQuitting) {
     showVideoPopup("activate");
   }

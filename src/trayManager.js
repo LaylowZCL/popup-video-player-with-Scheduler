@@ -51,7 +51,7 @@ class TrayManager extends EventEmitter {
       
       this.tray = new Tray(trayIcon);
       
-      this.tray.setToolTip('Video Popup Scheduler\nClique para mostrar/ocultar vídeo');
+      this.tray.setToolTip('Banco Moc Popup Video\nClique para mostrar/ocultar vídeo');
       
       this.updateContextMenu();
       
@@ -120,7 +120,7 @@ class TrayManager extends EventEmitter {
   showInTray() {
     if (this.tray && !this.tray.isDestroyed()) {
       try {
-        this.tray.setToolTip('Video Popup Scheduler (Em background)\nClique para mostrar vídeo');
+        this.tray.setToolTip('Banco Moc Popup Video (Em background)\nClique para mostrar vídeo');
       } catch (error) {
       }
     }
@@ -129,7 +129,7 @@ class TrayManager extends EventEmitter {
   hideFromTray() {
     if (this.tray && !this.tray.isDestroyed()) {
       try {
-        this.tray.setToolTip('Video Popup Scheduler (Vídeo aberto)\nClique para minimizar vídeo');
+        this.tray.setToolTip('Banco Moc Popup Video (Vídeo aberto)\nClique para minimizar vídeo');
       } catch (error) {
       }
     }
@@ -141,7 +141,7 @@ class TrayManager extends EventEmitter {
         if (this.tray.isSupported('balloon')) {
           this.tray.displayBalloon({
             icon: undefined,
-            title: title || 'Video Scheduler',
+            title: title || 'Banco Moc Popup Video',
             content: message || '',
             respectQuietTime: true,
             noSound: false

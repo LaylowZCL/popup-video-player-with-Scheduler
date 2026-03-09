@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manual de Utilização da Aplicação Desktop</title>
+  <link rel="icon" type="image/png" href="../assets/images/logo-bm.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../assets/css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar navbar-dark navbar-bm shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand brand-wrap fw-semibold" href="../index.html">
+        <img src="../assets/images/logo-bm.png" alt="Logo BancoMoc" class="brand-logo">
+        <span>Documentação BancoMoc</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <a href="../index.html" class="btn btn-outline-primary btn-sm mb-3">Voltar ao índice</a>
+    <h1 class="h3">Manual de Utilização da Aplicação Desktop</h1>
+
+    <section class="doc-section">
+      <h2>1. Plataformas suportadas</h2>
+      <ul>
+        <li><strong>Windows 10/11</strong> (x64).</li>
+        <li><strong>macOS</strong> (Intel/Apple Silicon).</li>
+        <li><strong>Linux</strong> (x64, com ambiente gráfico compatível).</li>
+      </ul>
+    </section>
+
+    <section class="doc-section">
+      <h2>2. Modelo de autenticação (hardcoded)</h2>
+      <p>Por decisão operacional, a aplicação desktop utiliza autenticação hardcoded para acesso à API.</p>
+      <ul>
+        <li>Não há fluxo de login por utilizador final na app desktop.</li>
+        <li>As credenciais técnicas (API key e client ID) ficam embebidas no build.</li>
+        <li>Este modelo reduz suporte de campo em instalações de grande volume.</li>
+      </ul>
+      <p><strong>Nota:</strong> a rotação de credenciais exige novo build e redistribuição.</p>
+    </section>
+
+    <section class="doc-section">
+      <h2>3. Regra obrigatória antes de compilar</h2>
+      <p><strong>A compilação só deve ocorrer depois de ser conhecido o domínio final da API.</strong></p>
+      <ol>
+        <li>Definir o domínio final (ex.: <code>https://dominiodaapi.com</code>).</li>
+        <li>Actualizar o valor hardcoded de <code>BASE_URL</code> para <code>https://dominiodaapi.com/api</code>.</li>
+        <li>Validar endpoint de saúde/autenticação.</li>
+        <li>Compilar os binários por sistema operativo.</li>
+      </ol>
+    </section>
+
+    <section class="doc-section">
+      <h2>4. Compilação e deploy por sistema operativo</h2>
+      <p>O projecto possui três manifestos de empacotamento:</p>
+      <ul>
+        <li><code>package.json</code> - build principal para macOS.</li>
+        <li><code>WIN_package.json</code> - build específico para Windows.</li>
+        <li><code>LNX_package.json</code> - build específico para Linux.</li>
+      </ul>
+      <p>Antes de compilar cada alvo, copiar o manifesto respectivo para <code>package.json</code> e executar o build.</p>
+      <p>Exemplo operacional:</p>
+      <ul>
+        <li>Windows: usar configuração de <code>WIN_package.json</code> e gerar <code>.exe/.msi</code>.</li>
+        <li>Linux: usar configuração de <code>LNX_package.json</code> e gerar <code>.AppImage/.deb</code>.</li>
+        <li>macOS: manter <code>package.json</code> principal e gerar <code>.dmg/.zip</code>.</li>
+      </ul>
+    </section>
+
+    <section class="doc-section">
+      <h2>5. Instalação por sistema operativo</h2>
+      <h3>5.1 Windows</h3>
+      <ol>
+        <li>Executar instalador assinado (<code>.exe</code> ou <code>.msi</code>).</li>
+        <li>Concluir assistente e validar arranque automático, se aplicável.</li>
+      </ol>
+      <h3>5.2 macOS</h3>
+      <ol>
+        <li>Abrir pacote <code>.dmg</code> e mover a app para Applications.</li>
+        <li>Conceder permissões na primeira execução.</li>
+      </ol>
+      <h3>5.3 Linux</h3>
+      <ol>
+        <li>Instalar pacote <code>.AppImage</code>, <code>.deb</code> ou equivalente.</li>
+        <li>Garantir permissões de execução e codecs necessários.</li>
+      </ol>
+    </section>
+
+    <section class="doc-section">
+      <h2>6. Validação pós-instalação</h2>
+      <ol>
+        <li>Confirmar autenticação com a API.</li>
+        <li>Confirmar leitura de horários activos.</li>
+        <li>Confirmar envio de eventos para <code>/api/videos/report</code>.</li>
+      </ol>
+      <p>Nome oficial da aplicação: <strong>Banco Moc Popup Video</strong>.</p>
+    </section>
+
+    <section class="doc-section">
+      <h2>7. Manual oficial de manutenção</h2>
+      <p>Manter documentação técnica detalhada no repositório Electron: <code>docs/manual-utilizacao-app-electron.md</code>.</p>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 const videoUrl = urlParams.get("videoUrl");
 const videoId = urlParams.get("videoId");
+const scheduleId = urlParams.get("scheduleId");
 const videoTitle = urlParams.get("videoTitle");
 const triggerType = urlParams.get("triggerType") || "scheduled";
 
@@ -17,8 +18,38 @@ window.playbackStartTime = null;
 window.videoPlayer = videoPlayer;
 window.sessionId = Math.random().toString(36).substring(2, 15);
 
-// Log inicial para debug
-console.log("🎬 Dados do vídeo:", { videoId, videoTitle, triggerType });
+const runtimeInfo =
+    window.electronAPI && typeof window.electronAPI.getRuntimeInfo === "function"
+        ? window.electronAPI.getRuntimeInfo()
+        : { isProduction: false, logLevel: "debug" };
+
+const rendererLevels = { debug: 10, info: 20, warn: 30, error: 40, none: 100 };
+const rendererCurrentLevel = rendererLevels[runtimeInfo.logLevel] ? runtimeInfo.logLevel : "debug";
+
+function canRenderLog(level) {
+    return rendererLevels[level] >= rendererLevels[rendererCurrentLevel];
+}
+
+const logger = {
+    debug: (...args) => {
+        if (!canRenderLog("debug")) return;
+        console.debug("[renderer]", ...args);
+    },
+    info: (...args) => {
+        if (!canRenderLog("info")) return;
+        console.info("[renderer]", ...args);
+    },
+    warn: (...args) => {
+        if (!canRenderLog("warn")) return;
+        console.warn("[renderer]", ...args);
+    },
+    error: (...args) => {
+        if (!canRenderLog("error")) return;
+        console.error("[renderer]", ...args);
+    },
+};
+
+logger.info("🎬 Dados do vídeo:", { videoId, videoTitle, triggerType });
 
 function formatTime(seconds) {
     if (isNaN(seconds)) return "0:00";
@@ -29,22 +60,15 @@ function formatTime(seconds) {
 
 function reportVideoEvent(eventType, additionalData = {}) {
     try {
-        if (!window.require) {
-            console.log('⚠️ Electron não disponível');
+        if (!window.electronAPI || typeof window.electronAPI.reportVideoView !== "function") {
+            logger.info('⚠️ electronAPI não disponível');
             return;
         }
-
-        const electron = window.require("electron");
-        if (!electron || !electron.ipcRenderer) {
-            console.log('⚠️ ipcRenderer não disponível');
-            return;
-        }
-
-        const { ipcRenderer } = electron;
 
         const reportData = {
-            video_id: videoId,
+            video_id: videoId || null,
             video_title: videoTitle,
+            schedule_id: scheduleId || null,
             timestamp: new Date().toISOString(),
             event_type: eventType,
             trigger_type: triggerType,
@@ -54,16 +78,16 @@ function reportVideoEvent(eventType, additionalData = {}) {
             ...additionalData,
         };
 
-        console.log('📤 Enviando evento:', eventType, {
+        logger.info('📤 Enviando evento:', eventType, {
             video_id: reportData.video_id,
             video_title: reportData.video_title,
             position: reportData.playback_position,
             duration: reportData.video_duration
         });
         
-        ipcRenderer.send("report-video-view", reportData);
+        window.electronAPI.reportVideoView(reportData);
     } catch (error) {
-        console.error("❌ Erro ao reportar evento:", error);
+        logger.error("❌ Erro ao reportar evento:", error);
     }
 }
 
@@ -72,7 +96,7 @@ function setupVideoEventListeners() {
 
     videoPlayer.addEventListener("loadedmetadata", function () {
         window.videoDuration = videoPlayer.duration;
-        console.log('📏 Duração do vídeo:', window.videoDuration);
+        logger.info('📏 Duração do vídeo:', window.videoDuration);
 
         if (durationEl) {
             durationEl.textContent = formatTime(window.videoDuration);
@@ -120,7 +144,7 @@ function setupVideoEventListeners() {
             // Verificar conclusão (último 5% do vídeo)
             if (percent >= 95 && !window.hasVideoCompleted) {
                 window.hasVideoCompleted = true;
-                console.log('✅ Vídeo concluído!');
+                logger.info('✅ Vídeo concluído!');
                 reportVideoEvent("video_completed", {
                     video_duration: window.videoDuration,
                     final_position: videoPlayer.currentTime,
@@ -181,7 +205,7 @@ function setupVideoEventListeners() {
     });
 
     videoPlayer.addEventListener("error", function (e) {
-        console.error('❌ Erro no vídeo:', e);
+        logger.error('❌ Erro no vídeo:', e);
         reportVideoEvent("playback_error", {
             error_code: videoPlayer.error ? videoPlayer.error.code : 0,
             error_message: videoPlayer.error ? videoPlayer.error.message : 'Erro desconhecido'
@@ -214,11 +238,11 @@ function initializeVideo() {
             if (playPromise !== undefined) {
                 playPromise
                     .then(() => {
-                        console.log('▶️ Autoplay iniciado com sucesso');
+                        logger.info('▶️ Autoplay iniciado com sucesso');
                         reportVideoEvent("autoplay_started");
                     })
                     .catch((error) => {
-                        console.log('⚠️ Autoplay bloqueado:', error.message);
+                        logger.info('⚠️ Autoplay bloqueado:', error.message);
                         if (progressContainer) {
                             const clickMsg = document.createElement("div");
                             clickMsg.style.cssText =
@@ -232,7 +256,7 @@ function initializeVideo() {
                     });
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar vídeo principal:', error);
+            logger.error('❌ Erro ao carregar vídeo principal:', error);
             // Fallback para vídeo de exemplo
             videoPlayer.src =
                 "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
@@ -242,7 +266,7 @@ function initializeVideo() {
         }
     } else {
         // Fallback se não houver dados na URL
-        console.warn('⚠️ Sem dados de vídeo na URL, usando fallback');
+        logger.warn('⚠️ Sem dados de vídeo na URL, usando fallback');
         videoPlayer.src =
             "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
         videoPlayer.loop = true;
@@ -285,16 +309,13 @@ if (closeButton) {
         // Fechar/minimizar após delay
         setTimeout(() => {
             try {
-                if (window.require && window.require("electron")) {
-                    const electron = window.require("electron");
-                    if (electron && electron.ipcRenderer) {
-                        electron.ipcRenderer.send("minimize-window");
-                    } else if (window.close) {
-                        window.close();
-                    }
+                if (window.electronAPI && typeof window.electronAPI.minimizeWindow === "function") {
+                    window.electronAPI.minimizeWindow();
+                } else if (window.close) {
+                    window.close();
                 }
             } catch (error) {
-                console.error("❌ Erro ao minimizar janela:", error);
+                logger.error("❌ Erro ao minimizar janela:", error);
             }
         }, 100);
     });
@@ -356,7 +377,7 @@ if (videoPlayer) {
 
 // Inicialização quando a página carrega
 window.addEventListener("DOMContentLoaded", function () {
-    console.log('🚀 DOM carregado, inicializando vídeo...');
+    logger.info('🚀 DOM carregado, inicializando vídeo...');
     initializeVideo();
 
     // Reportar que a janela foi carregada
@@ -380,3 +401,12 @@ window.reportWindowClose = function () {
         });
     }
 };
+
+// Listener para pedido de fechamento vindo do main
+if (window.electronAPI && typeof window.electronAPI.onWindowCloseRequest === "function") {
+    window.electronAPI.onWindowCloseRequest(() => {
+        if (typeof window.reportWindowClose === "function") {
+            window.reportWindowClose();
+        }
+    });
+}
