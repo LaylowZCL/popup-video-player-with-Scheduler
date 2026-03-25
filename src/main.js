@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain, nativeImage, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, nativeImage, Menu, screen } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { createLogger } = require("./logger");
+const config = require("./config");
 const logger = createLogger("main");
 
 const APP_DISPLAY_NAME = "Banco Moc Popup Video";
@@ -57,45 +58,175 @@ function setApplicationMenu() {
         ]
       : []),
     {
-      label: "File",
-      submenu: [isMac ? { role: "close" } : { role: "quit" }],
-    },
-    {
-      label: "Edit",
+      label: "Arquivo",
       submenu: [
-        { role: "undo" },
-        { role: "redo" },
-        { type: "separator" },
-        { role: "cut" },
-        { role: "copy" },
-        { role: "paste" },
+        { role: "quit", label: "Sair" }
       ],
     },
     {
-      label: "View",
+      label: "Editar",
       submenu: [
-        { role: "reload" },
-        { role: "forceReload" },
-        { role: "toggleDevTools" },
+        { role: "undo", label: "Desfazer" },
+        { role: "redo", label: "Refazer" },
         { type: "separator" },
-        { role: "togglefullscreen" },
+        { role: "cut", label: "Recortar" },
+        { role: "copy", label: "Copiar" },
+        { role: "paste", label: "Colar" },
       ],
     },
     {
-      label: "Window",
+      label: "Exibir",
       submenu: [
-        { role: "minimize" },
-        { role: "zoom" },
-        ...(isMac ? [{ type: "separator" }, { role: "front" }] : [{ role: "close" }]),
+        { role: "reload", label: "Recarregar" },
+        { role: "forceReload", label: "Recarregar Forçadamente" },
+        { role: "toggleDevTools", label: "Ferramentas de Desenvolvedor" },
+        { type: "separator" },
+        { role: "togglefullscreen", label: "Tela Cheia" },
+      ],
+    },
+    {
+      label: "Janela",
+      submenu: [
+        { role: "minimize", label: "Minimizar" },
+        { role: "zoom", label: "Zoom" },
+        ...(isMac ? [{ type: "separator" }, { role: "front", label: "Trazer para Frente" }] : [{ role: "close", label: "Fechar" }]),
+      ],
+    },
+    {
+      label: "Vídeo",
+      submenu: [
+        {
+          label: "Assistir Agora",
+          accelerator: "CmdOrCtrl+V",
+          click: () => showVideoPopup("manual")
+        },
+        {
+          label: "Recarregar Vídeos e Horários",
+          accelerator: "CmdOrCtrl+R",
+          click: async () => {
+            logger.info("🔄 Recarregando vídeos e horários...");
+            await refreshVideosAndSchedules();
+          }
+        },
+        { type: "separator" },
+        {
+          label: "Legendas",
+          submenu: [
+            {
+              label: "Carregar Arquivo SRT",
+              click: () => {
+                // TODO: Implementar carregamento de legendas
+                logger.info("📝 Carregar legendas SRT");
+              }
+            },
+            {
+              label: "Baixar Legendas da URL",
+              click: () => {
+                // TODO: Implementar download de legendas
+                logger.info("📥 Baixar legendas da URL");
+              }
+            }
+          ]
+        }
       ],
     },
     {
       role: "help",
-      submenu: [{ label: APP_DISPLAY_NAME, enabled: false }],
+      submenu: [
+        { 
+          label: "Sobre",
+          click: () => {
+            require('electron').dialog.showMessageBox({
+              type: 'info',
+              title: 'Sobre',
+              message: 'Banco Moc Popup Video',
+              detail: `Versão: ${config.APP.VERSION}\nPlayer de vídeo popup com agendamento automático.\n\nDesenvolvido para Banco Moc.`,
+              buttons: ['OK']
+            });
+          }
+        }
+      ],
     },
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+function calculateWindowPosition(windowSettings) {
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  
+  // Valores padrão da config
+  const defaultWidth = config.WINDOW.WIDTH;
+  const defaultHeight = config.WINDOW.HEIGHT;
+  
+  // Usar valores da API ou padrão
+  const windowWidth = windowSettings.width || defaultWidth;
+  const windowHeight = windowSettings.height || defaultHeight;
+  
+  let x, y;
+  
+  // Se a API forneceu coordenadas específicas
+  if (windowSettings.x !== null && windowSettings.y !== null) {
+    x = windowSettings.x;
+    y = windowSettings.y;
+    logger.info(`📍 Usando coordenadas da API: x=${x}, y=${y}`);
+  } else {
+    // Calcular posição baseada no anchor/gravity
+    const position = windowSettings.position || windowSettings.gravity || 'bottom-right';
+    
+    switch (position.toLowerCase()) {
+      case 'top-left':
+      case 'north-west':
+        x = 50;
+        y = 50;
+        break;
+        
+      case 'top-right':
+      case 'north-east':
+        x = screenWidth - windowWidth - 50;
+        y = 50;
+        break;
+        
+      case 'bottom-left':
+      case 'south-west':
+        x = 50;
+        y = screenHeight - windowHeight - 50;
+        break;
+        
+      case 'bottom-right':
+      case 'south-east':
+      default:
+        x = screenWidth - windowWidth - 50;
+        y = screenHeight - windowHeight - 50;
+        break;
+        
+      case 'center':
+      case 'middle':
+        x = Math.floor((screenWidth - windowWidth) / 2);
+        y = Math.floor((screenHeight - windowHeight) / 2);
+        break;
+        
+      case 'top-center':
+      case 'north':
+        x = Math.floor((screenWidth - windowWidth) / 2);
+        y = 50;
+        break;
+        
+      case 'bottom-center':
+      case 'south':
+        x = Math.floor((screenWidth - windowWidth) / 2);
+        y = screenHeight - windowHeight - 50;
+        break;
+    }
+    
+    logger.info(`📍 Posição calculada (${position}): x=${x}, y=${y}`);
+  }
+  
+  // Garantir que a janela não saia da tela
+  x = Math.max(0, Math.min(x, screenWidth - windowWidth));
+  y = Math.max(0, Math.min(y, screenHeight - windowHeight));
+  
+  return { x, y, width: windowWidth, height: windowHeight };
 }
 
 if (process.platform === "win32") {
@@ -104,7 +235,6 @@ if (process.platform === "win32") {
 const TrayManager = require("./trayManager");
 const Scheduler = require("./scheduler");
 const ApiClient = require("./apiClient");
-const config = require("./config");
 
 let videoWindow = null;
 let trayManager = null;
@@ -113,6 +243,8 @@ let isQuitting = false;
 let apiClient = null;
 let intervals = [];
 let isVideoPlaying = false;
+let isOpeningPopup = false;
+let lastScheduleSnapshot = [];
 
 app.whenReady().then(async () => {
   app.setName(APP_DISPLAY_NAME);
@@ -128,19 +260,14 @@ app.whenReady().then(async () => {
   // Testar autenticação
   const authResult = await apiClient.testAuthentication();
   logger.info("🔑 Autenticação:", authResult ? "✅ Sucesso" : "❌ Falha");
+  await apiClient.checkApiHealth();
 
   // Inicializar tray manager
   trayManager = new TrayManager(app);
-  trayManager.on("open-video", () => toggleVideoWindow());
+  trayManager.on("open-video", () => showVideoPopup("manual"));
   trayManager.on("minimize-window", minimizeVideoWindow);
-  trayManager.on("reload-video", () => showVideoPopup("manual-reload"));
-  trayManager.on("check-videos", () => {
-    logger.info("🔍 Verificando novos vídeos...");
-    apiClient.checkVideoUpdates();
-  });
-  trayManager.on("check-schedule", () => {
-    logger.info("⏰ Verificando horários...");
-    apiClient.checkScheduleUpdates();
+  trayManager.on("refresh-content", async () => {
+    await refreshVideosAndSchedules();
   });
   trayManager.on("quit-app", () => {
     logger.info("🛑 Saindo da aplicação...");
@@ -207,6 +334,11 @@ app.whenReady().then(async () => {
 
   intervals.push(pingInterval);
 
+  const initialSchedule = apiClient.isAuthenticated ? await apiClient.getScheduleTimes().catch(() => null) : null;
+  if (Array.isArray(initialSchedule)) {
+    updateScheduleSnapshot(initialSchedule);
+  }
+
   const scheduleCheckInterval = setInterval(async () => {
     try {
       if (apiClient.isAuthenticated) {
@@ -215,7 +347,11 @@ app.whenReady().then(async () => {
         if (hasUpdates && scheduler) {
           logger.info("🔄 Atualizando horários do scheduler...");
           const newSchedule = await apiClient.getScheduleTimes();
-          scheduler.updateScheduleTimes(newSchedule);
+          const changed = updateScheduleSnapshot(newSchedule);
+          await scheduler.updateScheduleTimes(newSchedule);
+          if (changed) {
+            logger.info(`🧭 Horários atualizados: ${formatScheduleList(newSchedule)}`);
+          }
         }
       }
     } catch (error) {
@@ -224,6 +360,24 @@ app.whenReady().then(async () => {
   }, 60 * 60 * 1000); // 1 hora
 
   intervals.push(scheduleCheckInterval);
+
+  const scheduleForceRefreshInterval = setInterval(async () => {
+    try {
+      if (apiClient.isAuthenticated && scheduler) {
+        logger.info("🧭 Recarregamento forçado de horários (8h)...");
+        const newSchedule = await apiClient.getScheduleTimes();
+        const changed = updateScheduleSnapshot(newSchedule);
+        await scheduler.updateScheduleTimes(newSchedule);
+        if (changed) {
+          logger.info(`🧭 Horários atualizados: ${formatScheduleList(newSchedule)}`);
+        }
+      }
+    } catch (error) {
+      logger.error("❌ Erro no recarregamento forçado de horários:", error.message);
+    }
+  }, 8 * 60 * 60 * 1000); // 8 horas
+
+  intervals.push(scheduleForceRefreshInterval);
 
   const videoCheckInterval = setInterval(async () => {
     try {
@@ -248,6 +402,69 @@ app.whenReady().then(async () => {
   }
 });
 
+async function refreshVideosAndSchedules() {
+  if (!apiClient || !apiClient.isAuthenticated) {
+    trayManager?.showNotification("Erro", "Cliente não autenticado na API");
+    return;
+  }
+
+  try {
+    logger.info("🔍 Verificando novos vídeos...");
+    const videoUpdates = await apiClient.checkVideoUpdates();
+    if (videoUpdates?.hasUpdates) {
+      trayManager?.showNotification("Novos Vídeos", `${videoUpdates.newVideos} novos vídeos disponíveis`);
+    }
+  } catch (error) {
+    logger.error("❌ Erro ao verificar vídeos:", error.message);
+    trayManager?.showNotification("Erro", "Falha ao verificar novos vídeos");
+  }
+
+  try {
+    logger.info("⏰ Verificando horários...");
+    const scheduleUpdated = await apiClient.checkScheduleUpdates();
+    if (scheduler) {
+      const newSchedule = await apiClient.getScheduleTimes();
+      const changed = updateScheduleSnapshot(newSchedule);
+      await scheduler.updateScheduleTimes(newSchedule);
+      if (changed) {
+        logger.info(`🧭 Horários atualizados: ${formatScheduleList(newSchedule)}`);
+      }
+    }
+    if (scheduleUpdated) {
+      trayManager?.showNotification("Horários Atualizados", "Novos horários de reprodução foram carregados");
+    } else {
+      trayManager?.showNotification("Verificação Concluída", "Nenhum novo horário encontrado");
+    }
+  } catch (error) {
+    logger.error("❌ Erro ao verificar horários:", error.message);
+    trayManager?.showNotification("Erro", "Falha ao verificar novos horários");
+  }
+}
+
+function normalizeScheduleList(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter((item) => item.length > 0)
+    .sort();
+}
+
+function formatScheduleList(list) {
+  const normalized = normalizeScheduleList(list);
+  return normalized.length ? normalized.join(", ") : "nenhum horário";
+}
+
+function updateScheduleSnapshot(newSchedule) {
+  const normalized = normalizeScheduleList(newSchedule);
+  const previous = lastScheduleSnapshot.join("|");
+  const current = normalized.join("|");
+  if (current !== previous) {
+    lastScheduleSnapshot = normalized;
+    return true;
+  }
+  return false;
+}
+
 function toggleVideoWindow() {
   if (videoWindow && !videoWindow.isDestroyed() && videoWindow.isVisible()) {
     logger.info("📥 Alternando: minimizando janela");
@@ -263,23 +480,6 @@ function toggleVideoWindow() {
     videoWindow.setAlwaysOnTop(true, "screen-saver");
     trayManager.hideFromTray();
     isVideoPlaying = true;
-
-    // Reiniciar vídeo
-    if (videoWindow.webContents) {
-      videoWindow.webContents
-        .executeJavaScript(`
-          try {
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-              video.currentTime = 0;
-              video.play().catch(() => {});
-            }
-          } catch(e) {
-            // noop
-          }
-        `)
-        .catch((err) => logger.error("Erro ao executar JS:", err));
-    }
   } else {
     logger.info("🎬 Criando nova janela de vídeo");
     showVideoPopup("manual");
@@ -287,11 +487,17 @@ function toggleVideoWindow() {
 }
 
 async function showVideoPopup(triggerType = "scheduled") {
+  if (isOpeningPopup) {
+    logger.info("⏳ Popup já está a abrir, ignorando nova chamada");
+    return;
+  }
+  isOpeningPopup = true;
   logger.info("🎬 Mostrando popup, trigger:", triggerType);
 
   if (videoWindow && !videoWindow.isDestroyed() && videoWindow.isVisible()) {
     logger.info("📝 Janela já visível, apenas focando");
     videoWindow.focus();
+    isOpeningPopup = false;
     return;
   }
 
@@ -309,12 +515,17 @@ async function showVideoPopup(triggerType = "scheduled") {
       return;
     }
 
+    const subtitlesParam = videoData.subtitles && videoData.subtitles.length
+      ? JSON.stringify(videoData.subtitles)
+      : "";
+
     const queryParams = new URLSearchParams({
       videoUrl: videoData.url,
       videoId: videoData.videoId || "",
       scheduleId: videoData.scheduleId || "",
       videoTitle: videoData.title || "Vídeo",
       triggerType: triggerType,
+      subtitles: subtitlesParam
     }).toString();
 
     const htmlPath = path.join(__dirname, "video-popup.html");
@@ -332,15 +543,24 @@ async function showVideoPopup(triggerType = "scheduled") {
     } else {
       // Criar nova janela
       logger.info("🆕 Criando nova janela");
+      
+      // Calcular posição e tamanho dinâmicos
+      const windowSettings = videoData.windowSettings || {};
+      const calculatedPosition = calculateWindowPosition(windowSettings);
+      
+      logger.info("📐 Configurações da janela:", calculatedPosition);
+      
       const windowOptions = {
         icon: process.platform === "win32" ? APP_ICON_ICO : APP_ICON_PNG,
-        width: config.WINDOW.WIDTH,
-        height: config.WINDOW.HEIGHT,
+        width: calculatedPosition.width,
+        height: calculatedPosition.height,
+        x: calculatedPosition.x,
+        y: calculatedPosition.y,
         alwaysOnTop: config.WINDOW.ALWAYS_ON_TOP,
         frame: config.WINDOW.FRAME,
         skipTaskbar: config.WINDOW.SKIP_TASKBAR,
         show: true,
-        backgroundColor: "#000000",
+        backgroundColor: "#00000000", // Transparente
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
@@ -410,6 +630,8 @@ async function showVideoPopup(triggerType = "scheduled") {
     isVideoPlaying = false;
     
     trayManager.showNotification("Erro", "Falha ao abrir vídeo");
+  } finally {
+    isOpeningPopup = false;
   }
 }
 

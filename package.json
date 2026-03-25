@@ -20,7 +20,7 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.bancomoc.popupvideo",
+    "appId": "co.mz.bancomoc.ginastica",
     "productName": "Banco Moc Popup Video",
     "asar": true,
     "npmRebuild": false,

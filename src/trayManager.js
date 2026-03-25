@@ -32,12 +32,12 @@ class TrayManager extends EventEmitter {
           canvas.width = size;
           canvas.height = size;
           
-          ctx.fillStyle = '#FF0000';
+          ctx.fillStyle = '#FFFFFF';
           ctx.beginPath();
           ctx.arc(size/2, size/2, size/2 - 1, 0, Math.PI * 2);
           ctx.fill();
           
-          ctx.fillStyle = '#FFFFFF';
+          ctx.fillStyle = '#000000';
           ctx.font = 'bold 10px Arial';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -51,12 +51,12 @@ class TrayManager extends EventEmitter {
       
       this.tray = new Tray(trayIcon);
       
-      this.tray.setToolTip('Banco Moc Popup Video\nClique para mostrar/ocultar vídeo');
+      this.tray.setToolTip('Banco Moc Popup Video\nClique para abrir o menu');
       
       this.updateContextMenu();
       
-      this.tray.on('click', (event, bounds) => {
-        this.emit('open-video');
+      this.tray.on('click', () => {
+        this.tray.popUpContextMenu();
       });
       
     } catch (error) {
@@ -69,36 +69,16 @@ class TrayManager extends EventEmitter {
     try {
       const contextMenu = Menu.buildFromTemplate([
         {
-          label: '🎬 Mostrar/Ocultar Vídeo',
+          label: '🎬 Assistir Agora',
           click: () => {
             this.emit('open-video');
           }
         },
         {
-          label: '🔄 Recarregar Vídeo Agora',
+          label: '🔄 Recarregar Vídeos e Horários',
           click: () => {
-            this.emit('reload-video');
+            this.emit('refresh-content');
           }
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: '📊 Verificar Agora',
-          submenu: [
-            {
-              label: 'Verificar Novos Vídeos',
-              click: () => {
-                this.emit('check-videos');
-              }
-            },
-            {
-              label: 'Verificar Horários',
-              click: () => {
-                this.emit('check-schedule');
-              }
-            }
-          ]
         },
         {
           type: 'separator'
@@ -120,7 +100,7 @@ class TrayManager extends EventEmitter {
   showInTray() {
     if (this.tray && !this.tray.isDestroyed()) {
       try {
-        this.tray.setToolTip('Banco Moc Popup Video (Em background)\nClique para mostrar vídeo');
+        this.tray.setToolTip('Banco Moc Popup Video (Em background)\nClique para abrir o menu');
       } catch (error) {
       }
     }
@@ -129,7 +109,7 @@ class TrayManager extends EventEmitter {
   hideFromTray() {
     if (this.tray && !this.tray.isDestroyed()) {
       try {
-        this.tray.setToolTip('Banco Moc Popup Video (Vídeo aberto)\nClique para minimizar vídeo');
+        this.tray.setToolTip('Banco Moc Popup Video (Vídeo aberto)\nClique para abrir o menu');
       } catch (error) {
       }
     }

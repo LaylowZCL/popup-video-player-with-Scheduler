@@ -16,13 +16,14 @@ class ConfigManager {
         baseUrl: "http://127.0.0.1:8000/api",
         endpoints: {
           videos: "/scheduled/videos",
+          nextVideo: "/scheduled/videos/next",
           schedule: "/schedules/clients",
           report: "/videos/report"
         }
       },
       auth: {
         apiKey: "VIDEO_POPUP_SECRET_2025",
-        clientId: "ELECTRON_VIDEO_PLAYER",
+        clientId: "AUTO",
         version: "1.0.0"
       },
       app: {
@@ -126,9 +127,13 @@ class ConfigManager {
   }
 
   getAuthHeaders() {
+    const os = require('os');
+    const clientId = this.get('auth.clientId');
+    const resolvedClientId = clientId && clientId !== 'AUTO' ? clientId : os.hostname();
+
     return {
       'X-API-Key': this.get('auth.apiKey'),
-      'X-Client-ID': this.get('auth.clientId'),
+      'X-Client-ID': resolvedClientId,
       'X-App-Version': this.get('app.version'),
       'Content-Type': 'application/json',
       'Accept': 'application/json'
