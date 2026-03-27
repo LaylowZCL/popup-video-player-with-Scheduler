@@ -21,12 +21,14 @@
     <!-- Controles do player -->
     <div class="video-controls" id="videoControls">
       <!-- Barra de progresso -->
-      <div class="progress-bar-container">
+      <div class="progress-bar-container" id="progressBarContainer">
+        <div class="progress-tooltip" id="progressTooltip">0:00</div>
         <div class="progress-bar" id="progressBar">
           <div class="progress-filled" id="progressFilled"></div>
           <div class="progress-handle" id="progressHandle"></div>
         </div>
         <div class="buffered-bar" id="bufferedBar"></div>
+        <input type="range" class="progress-slider" id="progressSlider" min="0" max="100" step="0.1" value="0" aria-label="Progresso do vídeo">
       </div>
       
       <!-- Controles principais -->
@@ -38,12 +40,6 @@
             </svg>
             <svg class="icon pause-icon" viewBox="0 0 24 24">
               <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-            </svg>
-          </button>
-          
-          <button class="control-btn" id="stopBtn" title="Parar">
-            <svg class="icon" viewBox="0 0 24 24">
-              <path d="M6 6h12v12H6z"/>
             </svg>
           </button>
           
@@ -86,12 +82,6 @@
           
           <button class="control-btn" id="speedBtn" title="Velocidade">
             <span class="speed-text">1x</span>
-          </button>
-          
-          <button class="control-btn" id="pipBtn" title="Picture-in-Picture">
-            <svg class="icon" viewBox="0 0 24 24">
-              <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.87 22.1 3 21 3H3c-1.1 0-2 .87-2 1.98V19c0 1.13.9 2 2 2h18c1.1 0 2-.87 2-2zm-2 .02H3V4.97h18v14.05z"/>
-            </svg>
           </button>
           
           <button class="control-btn" id="fullscreenBtn" title="Tela Cheia">

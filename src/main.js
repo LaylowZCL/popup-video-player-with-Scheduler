@@ -152,6 +152,43 @@ function setApplicationMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+function resolveWindowSettings(windowSettings = {}) {
+  const resolved = {
+    ...(activePopupWindowSettings || {}),
+    ...(windowSettings || {}),
+  };
+
+  return {
+    ...resolved,
+    width: Number.isFinite(Number(resolved.width)) ? Number(resolved.width) : null,
+    height: Number.isFinite(Number(resolved.height)) ? Number(resolved.height) : null,
+    x: Number.isFinite(Number(resolved.x)) ? Number(resolved.x) : null,
+    y: Number.isFinite(Number(resolved.y)) ? Number(resolved.y) : null,
+    position: resolved.position || resolved.gravity || null,
+  };
+}
+
+function applyPopupWindowSettings(windowSettings = {}) {
+  const resolvedSettings = resolveWindowSettings(windowSettings);
+  activePopupWindowSettings = resolvedSettings;
+
+  if (!videoWindow || videoWindow.isDestroyed()) {
+    logger.info("🪟 Definições da janela guardadas para o próximo popup:", resolvedSettings);
+    return resolvedSettings;
+  }
+
+  const calculated = calculateWindowPosition(resolvedSettings);
+  videoWindow.setBounds({
+    x: calculated.x,
+    y: calculated.y,
+    width: calculated.width,
+    height: calculated.height,
+  });
+  videoWindow.setAlwaysOnTop(true, "screen-saver");
+  logger.info("🪟 Configuração da janela reaplicada:", calculated);
+  return calculated;
+}
+
 function calculateWindowPosition(windowSettings) {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   
@@ -165,61 +202,100 @@ function calculateWindowPosition(windowSettings) {
   
   let x, y;
   
-  // Se a API forneceu coordenadas específicas
-  if (windowSettings.x !== null && windowSettings.y !== null) {
-    x = windowSettings.x;
-    y = windowSettings.y;
+  const hasExplicitCoordinates = Number.isFinite(windowSettings.x) && Number.isFinite(windowSettings.y);
+
+  // Se a API forneceu coordenadas específicas válidas
+  if (hasExplicitCoordinates) {
+    x = Number(windowSettings.x);
+    y = Number(windowSettings.y);
     logger.info(`📍 Usando coordenadas da API: x=${x}, y=${y}`);
   } else {
     // Calcular posição baseada no anchor/gravity
     const position = windowSettings.position || windowSettings.gravity || 'bottom-right';
     
-    switch (position.toLowerCase()) {
+    const normalizedPosition = String(position || 'inferior-direito')
+      .toLowerCase()
+      .trim()
+      .replace(/_/g, '-')
+      .replace(/\s+/g, '-')
+      .replace('centre', 'center');
+
+    switch (normalizedPosition) {
+      case 'superior-esquerdo':
       case 'top-left':
+      case 'left-top':
       case 'north-west':
         x = 50;
         y = 50;
         break;
-        
+
+      case 'superior-direito':
       case 'top-right':
+      case 'right-top':
       case 'north-east':
         x = screenWidth - windowWidth - 50;
         y = 50;
         break;
-        
+
+      case 'inferior-esquerdo':
       case 'bottom-left':
+      case 'left-bottom':
       case 'south-west':
         x = 50;
         y = screenHeight - windowHeight - 50;
         break;
-        
+
+      case 'inferior-direito':
       case 'bottom-right':
+      case 'right-bottom':
       case 'south-east':
-      default:
         x = screenWidth - windowWidth - 50;
         y = screenHeight - windowHeight - 50;
         break;
-        
+
+      case 'centro':
       case 'center':
       case 'middle':
         x = Math.floor((screenWidth - windowWidth) / 2);
         y = Math.floor((screenHeight - windowHeight) / 2);
         break;
-        
+
       case 'top-center':
+      case 'center-top':
       case 'north':
+      case 'top':
         x = Math.floor((screenWidth - windowWidth) / 2);
         y = 50;
         break;
-        
+
       case 'bottom-center':
+      case 'center-bottom':
       case 'south':
+      case 'bottom':
         x = Math.floor((screenWidth - windowWidth) / 2);
         y = screenHeight - windowHeight - 50;
         break;
+
+      case 'left':
+      case 'center-left':
+      case 'west':
+        x = 50;
+        y = Math.floor((screenHeight - windowHeight) / 2);
+        break;
+
+      case 'right':
+      case 'center-right':
+      case 'east':
+      default:
+        x = screenWidth - windowWidth - 50;
+        y = Math.floor((screenHeight - windowHeight) / 2);
+        if (![ 'bottom-right', 'right-bottom', 'south-east' ].includes(normalizedPosition)) {
+          logger.info(`📍 Posição não reconhecida (${position}), usando fallback lateral direito.`);
+        }
+        break;
     }
     
-    logger.info(`📍 Posição calculada (${position}): x=${x}, y=${y}`);
+    logger.info(`📍 Posição calculada (${normalizedPosition}): x=${x}, y=${y}`);
   }
   
   // Garantir que a janela não saia da tela
@@ -244,6 +320,7 @@ let apiClient = null;
 let intervals = [];
 let isVideoPlaying = false;
 let isOpeningPopup = false;
+let activePopupWindowSettings = null;
 let lastScheduleSnapshot = [];
 
 app.whenReady().then(async () => {
@@ -409,35 +486,51 @@ async function refreshVideosAndSchedules() {
   }
 
   try {
-    logger.info("🔍 Verificando novos vídeos...");
-    const videoUpdates = await apiClient.checkVideoUpdates();
-    if (videoUpdates?.hasUpdates) {
-      trayManager?.showNotification("Novos Vídeos", `${videoUpdates.newVideos} novos vídeos disponíveis`);
-    }
-  } catch (error) {
-    logger.error("❌ Erro ao verificar vídeos:", error.message);
-    trayManager?.showNotification("Erro", "Falha ao verificar novos vídeos");
-  }
+    logger.info("🔄 A recarregar vídeos, horários e definições da janela...");
 
-  try {
-    logger.info("⏰ Verificando horários...");
-    const scheduleUpdated = await apiClient.checkScheduleUpdates();
+    const [videoUpdates, newSchedule, popupSettings] = await Promise.all([
+      apiClient.checkVideoUpdates(),
+      apiClient.getScheduleTimes(),
+      apiClient.forceRefreshDashboardPopupSettings(),
+    ]);
+
     if (scheduler) {
-      const newSchedule = await apiClient.getScheduleTimes();
       const changed = updateScheduleSnapshot(newSchedule);
       await scheduler.updateScheduleTimes(newSchedule);
       if (changed) {
-        logger.info(`🧭 Horários atualizados: ${formatScheduleList(newSchedule)}`);
+        logger.info(`🧭 Horários actualizados: ${formatScheduleList(newSchedule)}`);
+      } else {
+        logger.info(`🧭 Horários mantidos: ${formatScheduleList(newSchedule)}`);
       }
     }
-    if (scheduleUpdated) {
-      trayManager?.showNotification("Horários Atualizados", "Novos horários de reprodução foram carregados");
+
+    if (popupSettings) {
+      logger.info("🪟 Definições da janela recarregadas:", popupSettings);
+      activePopupWindowSettings = resolveWindowSettings(popupSettings);
+      applyPopupWindowSettings(activePopupWindowSettings);
     } else {
-      trayManager?.showNotification("Verificação Concluída", "Nenhum novo horário encontrado");
+      logger.info("🪟 Sem novas definições remotas da janela; mantidas as actuais.");
     }
+
+    const videoMessage = videoUpdates?.hasUpdates
+      ? `${videoUpdates.newVideos} novos vídeos detectados`
+      : `${videoUpdates?.count ?? 0} vídeos confirmados`;
+    const scheduleMessage = Array.isArray(newSchedule) && newSchedule.length
+      ? `Horários: ${formatScheduleList(newSchedule)}`
+      : "Sem horários remotos válidos";
+    const popupMessage = popupSettings
+      ? `Janela: ${popupSettings.width || 'auto'}x${popupSettings.height || 'auto'} · ${popupSettings.position || 'padrão'}`
+      : "Janela: sem alterações remotas";
+
+    trayManager?.showNotification(
+      "Conteúdo recarregado",
+      `${videoMessage}
+${scheduleMessage}
+${popupMessage}`
+    );
   } catch (error) {
-    logger.error("❌ Erro ao verificar horários:", error.message);
-    trayManager?.showNotification("Erro", "Falha ao verificar novos horários");
+    logger.error("❌ Erro ao recarregar conteúdo:", error.message);
+    trayManager?.showNotification("Erro", "Falha ao recarregar vídeos, horários e definições");
   }
 }
 
@@ -531,9 +624,13 @@ async function showVideoPopup(triggerType = "scheduled") {
     const htmlPath = path.join(__dirname, "video-popup.html");
     const videoUrlWithParams = `file://${htmlPath}?${queryParams}`;
 
+    const mergedWindowSettings = resolveWindowSettings(videoData.windowSettings || {});
+    activePopupWindowSettings = mergedWindowSettings;
+
     if (videoWindow && !videoWindow.isDestroyed()) {
       // Reutilizar janela existente
       logger.info("🔄 Reutilizando janela existente");
+      applyPopupWindowSettings(mergedWindowSettings);
       await videoWindow.loadURL(videoUrlWithParams);
       videoWindow.show();
       videoWindow.focus();
@@ -545,7 +642,7 @@ async function showVideoPopup(triggerType = "scheduled") {
       logger.info("🆕 Criando nova janela");
       
       // Calcular posição e tamanho dinâmicos
-      const windowSettings = videoData.windowSettings || {};
+      const windowSettings = mergedWindowSettings;
       const calculatedPosition = calculateWindowPosition(windowSettings);
       
       logger.info("📐 Configurações da janela:", calculatedPosition);

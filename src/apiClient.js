@@ -155,8 +155,11 @@ class ApiClient {
         if (windowSettings.height === null && dashboardPopup.height) {
           windowSettings.height = dashboardPopup.height;
         }
-        if (!windowSettings.position && dashboardPopup.position) {
+
+        const hasExplicitCoordinates = Number.isFinite(Number(windowSettings.x)) && Number.isFinite(Number(windowSettings.y));
+        if (!hasExplicitCoordinates && dashboardPopup.position) {
           windowSettings.position = dashboardPopup.position;
+          windowSettings.gravity = dashboardPopup.position;
         }
       }
 
@@ -549,6 +552,26 @@ class ApiClient {
 
   generateSessionId() {
     return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
+
+  resetPopupSettingsCache(removePersistedCache = false) {
+    this.popupSettingsCache = null;
+    this.popupSettingsFetchedAt = 0;
+
+    if (removePersistedCache) {
+      try {
+        if (fs.existsSync(this.popupSettingsCachePath)) {
+          fs.unlinkSync(this.popupSettingsCachePath);
+        }
+      } catch (error) {
+        logger.warn("⚠️ Falha ao limpar cache persistido de popupSettings:", error.message);
+      }
+    }
+  }
+
+  async forceRefreshDashboardPopupSettings() {
+    this.resetPopupSettingsCache(false);
+    return this.getDashboardPopupSettings();
   }
 
   async getDashboardPopupSettings() {
