@@ -614,10 +614,14 @@ class ApiClient {
     const width = popup.popup_width || popup.width || null;
     const height = popup.popup_height || popup.height || null;
     const rawPosition = popup.popup_position || popup.position || null;
+    const normalizedPosition = rawPosition
+      ? String(rawPosition).toLowerCase().replace(/_/g, "-")
+      : "bottom-right";
+
     return {
       width: width ? Number(width) : null,
       height: height ? Number(height) : null,
-      position: rawPosition ? String(rawPosition).toLowerCase().replace(/_/g, "-") : null
+      position: normalizedPosition
     };
   }
 

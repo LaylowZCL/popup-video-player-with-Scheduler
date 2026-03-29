@@ -1,7 +1,7 @@
 module.exports = {
   API: {
-    BASE_URL: 'http://127.0.0.1:8000/api',
     // BASE_URL: 'https://ginastica.bancomoc.mz/api',
+    BASE_URL: 'http://127.0.0.1:8000/api',
     ENDPOINTS: {
       VIDEOS: '/scheduled/videos',
       NEXT_VIDEO: '/scheduled/videos/next',
@@ -24,12 +24,12 @@ module.exports = {
     VERSION: '1.0.0',
     AUTO_START: true,
     VIDEO_LOOP: false, // Desabilitado por padrão - controlado pelo player
-    DEFAULT_SCHEDULE: ['09:00', '12:00', '15:00', '18:00']
+    DEFAULT_SCHEDULE: ['09:00', '12:00', '15:00']
   },
   
   WINDOW: {
-    WIDTH: 854,
-    HEIGHT: 480,
+    WIDTH: 420,
+    HEIGHT: 380,
     ALWAYS_ON_TOP: true,
     FRAME: false,
     SKIP_TASKBAR: true

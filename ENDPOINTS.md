@@ -5,7 +5,7 @@
 ### Base URL
 ```
 Desenvolvimento: http://127.0.0.1:8000/api
-Produção: https://ginastica.bancomoc.mz/api
+Produção: http://127.0.0.1:8000/api
 ```
 
 ### Headers de Autenticação

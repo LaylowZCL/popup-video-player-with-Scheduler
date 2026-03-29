@@ -153,18 +153,40 @@ function setApplicationMenu() {
 }
 
 function resolveWindowSettings(windowSettings = {}) {
+  const toOptionalNumber = (value) => {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const incomingSettings = windowSettings || {};
+  const incomingX = toOptionalNumber(incomingSettings.x);
+  const incomingY = toOptionalNumber(incomingSettings.y);
+  const incomingHasExplicitCoordinates = incomingX !== null && incomingY !== null;
+  const incomingHasPlacement = Boolean(incomingSettings.position || incomingSettings.gravity);
+
   const resolved = {
     ...(activePopupWindowSettings || {}),
-    ...(windowSettings || {}),
+    ...incomingSettings,
   };
+
+  const normalizedWidth = toOptionalNumber(resolved.width);
+  const normalizedHeight = toOptionalNumber(resolved.height);
+  const normalizedX = toOptionalNumber(resolved.x);
+  const normalizedY = toOptionalNumber(resolved.y);
+
+  const shouldResetCoordinates = incomingHasPlacement && !incomingHasExplicitCoordinates;
 
   return {
     ...resolved,
-    width: Number.isFinite(Number(resolved.width)) ? Number(resolved.width) : null,
-    height: Number.isFinite(Number(resolved.height)) ? Number(resolved.height) : null,
-    x: Number.isFinite(Number(resolved.x)) ? Number(resolved.x) : null,
-    y: Number.isFinite(Number(resolved.y)) ? Number(resolved.y) : null,
-    position: resolved.position || resolved.gravity || null,
+    width: normalizedWidth,
+    height: normalizedHeight,
+    x: shouldResetCoordinates ? null : normalizedX,
+    y: shouldResetCoordinates ? null : normalizedY,
+    position: resolved.position || resolved.gravity || 'bottom-right',
   };
 }
 
