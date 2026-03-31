@@ -1,7 +1,8 @@
 module.exports = {
   API: {
-    // BASE_URL: 'https://ginastica.bancomoc.mz/api',
-    BASE_URL: 'http://127.0.0.1:8000/api',
+    // BASE_URL: 'https://ginastica.bancomoc.mz/api', // produção
+    BASE_URL: 'https://client.fernandozucula.com/api', // teste produção
+    // BASE_URL: 'http://127.0.0.1:8000/api',
     ENDPOINTS: {
       VIDEOS: '/scheduled/videos',
       NEXT_VIDEO: '/scheduled/videos/next',
